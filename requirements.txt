@@ -1,3 +1,5 @@
 Flask
 Flask-SQLAlchemy
+pandas
 twilio
+python-dotenv
