@@ -1,0 +1,383 @@
+{% extends "base.html" %}
+
+{% block content %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+<style>
+    /* --- DARK MODE UI STYLES (Screen Only) --- */
+    .classroom-wrapper { 
+        background: rgba(30, 41, 59, 0.4); 
+        border: 1px solid rgba(148, 163, 184, 0.1); 
+        border-radius: 16px; 
+        padding: 16px; 
+        margin-bottom: 20px; 
+        page-break-inside: avoid; 
+        overflow-x: auto; /* Allows horizontal scroll on mobile */
+    }
+    @media (min-width: 768px) {
+        .classroom-wrapper { padding: 24px; }
+    }
+    
+    .benches-grid { 
+        display: grid; 
+        gap: 16px; 
+        min-width: max-content; /* Prevents bench squishing */
+        padding-bottom: 8px;
+    }
+    
+    .bench-unit { 
+        background: #1e293b; 
+        border: 1px solid #334155; 
+        border-radius: 12px; 
+        padding: 8px; 
+        display: flex; 
+        flex-direction: column; 
+        align-items: center; 
+        page-break-inside: avoid;
+        min-width: 260px; /* Forces minimum width for readability */
+    }
+    
+    .bench-label { font-size: 9px; color: #64748b; font-weight: 800; margin-bottom: 6px; text-transform: uppercase; }
+    .seats-row { display: flex; gap: 8px; width: 100%; }
+    .seat-box { flex: 1; background: #0f172a; border-radius: 8px; min-height: 85px; padding: 10px; padding-right: 42px; position: relative; border: 1px solid rgba(255,255,255,0.05); }
+    .seat-occupied-blue { background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(30, 58, 138, 0.3)); border-color: rgba(59, 130, 246, 0.4); }
+    .seat-occupied-purple { background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(88, 28, 135, 0.3)); border-color: rgba(168, 85, 247, 0.4); }
+    
+    /* Font sizes for UI */
+    .stu-roll { font-size: 14px; font-weight: 900; color: #fff; }
+    .stu-name { font-size: 10px; font-weight: 500; color: #94a3b8; width: 70%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .stu-reg { font-size: 9px; color: #4ade80; font-family: monospace; font-weight: bold; margin-top: 2px;}
+    
+    /* QR Code Style */
+    .qr-code { position: absolute; bottom: 6px; right: 6px; width: 36px; height: 36px; border-radius: 4px; border: 2px solid white; background: white; }
+
+    /* Custom Scrollbar for mobile grids */
+    .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+
+    /* Print Specifics to hide UI */
+    @media print {
+        body * { visibility: hidden; }
+        .no-print, .header-container, #results-area, #printModal { display: none !important; }
+    }
+</style>
+
+<div class="max-w-[98%] lg:max-w-[95%] mx-auto flex flex-col gap-6 min-h-[90vh] lg:h-[90vh] pb-10 lg:pb-0">
+    
+    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-end pb-4 border-b border-gray-800 gap-4 no-print">
+        <div class="w-full lg:w-auto">
+            <div class="flex items-center gap-3">
+                <a href="{{ url_for('exam_timetable_index') }}" class="text-gray-500 hover:text-white transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                </a>
+                <h1 class="text-2xl sm:text-3xl font-bold text-white leading-tight">{{ timetable.title }}</h1>
+            </div>
+            <p class="text-xs text-gray-500 mt-1 sm:ml-9">Created: {{ timetable.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+        </div>
+        
+        <div class="flex flex-wrap gap-2 sm:gap-3 items-center w-full lg:w-auto">
+            <button onclick="generatePDF('download')" class="flex-1 sm:flex-none justify-center bg-gray-800 hover:bg-gray-700 text-white px-3 sm:px-4 py-2.5 sm:py-2 rounded-lg font-bold flex items-center gap-2 text-sm sm:text-base">
+                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                Download
+            </button>
+
+            <button onclick="openPrintModal()" class="flex-1 sm:flex-none justify-center bg-purple-600 hover:bg-purple-500 text-white px-3 sm:px-4 py-2.5 sm:py-2 rounded-lg font-bold flex items-center gap-2 text-sm sm:text-base">
+                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                Print
+            </button>
+
+            <button onclick="generatePDF('share')" class="w-full sm:w-auto justify-center bg-blue-600 hover:bg-blue-500 text-white px-3 sm:px-4 py-2.5 sm:py-2 rounded-lg font-bold flex items-center gap-2 text-sm sm:text-base">
+                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-5.367 3 3 0 00-5.367 5.367zm0 10.632a3 3 0 105.368 5.368 3 3 0 00-5.368-5.368z"></path></svg>
+                Share PDF
+            </button>
+        </div>
+    </div>
+
+    <div class="bg-black/20 rounded-2xl border border-gray-800/50 p-4 sm:p-6 relative flex-1 min-h-[400px] overflow-hidden">
+        <div id="results-area" class="absolute inset-0 overflow-y-auto overflow-x-hidden custom-scroll p-4 sm:p-6 space-y-8"></div>
+    </div>
+</div>
+
+<div id="printModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4 no-print">
+    <div class="bg-gray-900 border border-gray-800 p-6 rounded-2xl w-full max-w-md shadow-2xl">
+        <h3 class="text-xl font-bold text-white mb-6">Select Print Format</h3>
+        
+        <button onclick="generatePDF('print'); closePrintModal()" class="w-full bg-gray-800 hover:bg-gray-700 text-white p-4 rounded-xl mb-4 flex items-center gap-4 text-left transition border border-gray-700">
+            <div class="bg-blue-500/20 p-2 rounded-lg text-blue-400">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            </div>
+            <div>
+                <div class="font-bold">Print Exam Sheet</div>
+                <div class="text-xs text-gray-400">Formal Report (Double Border)</div>
+            </div>
+        </button>
+
+        <div class="w-full bg-gray-800 p-4 rounded-xl flex flex-col gap-3 border border-gray-700">
+            <div class="flex items-center gap-4">
+                <div class="bg-purple-500/20 p-2 rounded-lg text-purple-400">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
+                </div>
+                <div>
+                    <div class="font-bold text-white">Print Desk Stickers</div>
+                    <div class="text-xs text-gray-400">Individual QR labels</div>
+                </div>
+            </div>
+            <select id="progSelect" class="w-full bg-black/30 border border-gray-600 rounded-lg p-2 text-sm text-white focus:outline-none">
+                <option value="all">All Programs</option>
+                {% for p in programs %}
+                <option value="{{ p.id }}">{{ p.name }}</option>
+                {% endfor %}
+            </select>
+            <button onclick="confirmPrintStickers()" class="w-full bg-purple-600 hover:bg-purple-500 text-white py-2 rounded-lg font-bold text-sm transition">Generate Stickers</button>
+        </div>
+
+        <button onclick="closePrintModal()" class="mt-6 w-full text-gray-500 hover:text-white text-sm font-bold">Cancel</button>
+    </div>
+</div>
+
+<script id="alloc-data" type="application/json">{{ alloc_data | tojson | safe }}</script>
+<script>
+    const allocationList = JSON.parse(document.getElementById('alloc-data').textContent);
+    const baseUrl = window.location.origin;
+    
+    // --- LOCAL LOGO PATH ---
+    const sbuLogoUrl = "{{ url_for('static', filename='logo.png') }}"; 
+
+    // --- PROGRAM MAP ---
+    const programMap = {};
+    {% for p in programs %}
+    programMap[{{ p.id }}] = "{{ p.name }}";
+    {% endfor %}
+
+    // --- HELPER: CONVERT IMAGE URL TO BASE64 ---
+    const getBase64ImageFromURL = (url) => {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.setAttribute("crossOrigin", "anonymous");
+            img.onload = () => {
+                const canvas = document.createElement("canvas");
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(img, 0, 0);
+                resolve(canvas.toDataURL("image/png"));
+            };
+            img.onerror = () => resolve(null);
+            img.src = url;
+        });
+    };
+
+    // --- RENDER VISUAL UI ---
+    function renderVisualUI(list) {
+        const area = document.getElementById('results-area');
+        area.innerHTML = '';
+        const grouped = {};
+        list.forEach(item => { if(!grouped[item.room]) grouped[item.room] = []; grouped[item.room].push(item); });
+
+        for (const [roomName, students] of Object.entries(grouped)) {
+            const benches = {};
+            const roomCols = students[0].room_cols || 3; 
+            students.forEach(s => {
+                if(!benches[s.bench]) benches[s.bench] = { L: null, R: null };
+                if(s.seat === 'L') benches[s.bench].L = s; else benches[s.bench].R = s;
+            });
+
+            let benchesHTML = '';
+            Object.keys(benches).sort((a,b) => parseInt(a) - parseInt(b)).forEach(bid => {
+                const sL = benches[bid].L;
+                const sR = benches[bid].R;
+                
+                const urlL = sL ? `${baseUrl}/scan/${sL.exam_uid}` : '';
+                const urlR = sR ? `${baseUrl}/scan/${sR.exam_uid}` : '';
+
+                const htmlL = sL ? `
+                    <div class="seat-box seat-occupied-blue">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(urlL)}" class="qr-code">
+                        <div class="stu-roll">${sL.roll}</div>
+                        <div class="stu-name">${sL.name}</div>
+                        <div class="stu-reg">${sL.reg_no}</div>
+                    </div>` : `<div class="seat-box opacity-20 border border-dashed border-gray-600"></div>`;
+
+                const htmlR = sR ? `
+                    <div class="seat-box seat-occupied-purple">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(urlR)}" class="qr-code">
+                        <div class="stu-roll">${sR.roll}</div>
+                        <div class="stu-name">${sR.name}</div>
+                        <div class="stu-reg">${sR.reg_no}</div>
+                    </div>` : `<div class="seat-box opacity-20 border border-dashed border-gray-600"></div>`;
+
+                benchesHTML += `<div class="bench-unit"><div class="bench-label">Bench ${bid}</div><div class="seats-row">${htmlL}${htmlR}</div></div>`;
+            });
+            // Grid-template-columns is applied directly, container scrolls horizontally on mobile if needed
+            area.innerHTML += `
+                <div class="classroom-wrapper custom-scroll">
+                    <div class="flex justify-between items-center mb-6 border-b border-gray-700/50 pb-3">
+                        <h2 class="text-xl font-bold text-white">${roomName}</h2>
+                        <span class="bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full text-xs font-bold">${students.length} Allocated</span>
+                    </div>
+                    <div class="benches-grid" style="grid-template-columns: repeat(${roomCols}, 1fr);">
+                        ${benchesHTML}
+                    </div>
+                </div>`;
+        }
+    }
+
+    // --- GENERATE PDF ---
+    async function generatePDF(action) {
+        let logoBase64 = null;
+        try { logoBase64 = await getBase64ImageFromURL(sbuLogoUrl); } catch(e) {}
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'mm', 'a4');
+        const grouped = {};
+        allocationList.forEach(item => { if(!grouped[item.room]) grouped[item.room] = []; grouped[item.room].push(item); });
+
+        let firstPage = true;
+        for (const [roomName, students] of Object.entries(grouped)) {
+            if (!firstPage) doc.addPage();
+            firstPage = false;
+
+            // --- DOUBLE BORDER ---
+            doc.setDrawColor(211, 84, 0); 
+            doc.setLineWidth(1.2);
+            doc.rect(5, 5, 200, 287); 
+
+            doc.setDrawColor(20, 50, 120); 
+            doc.setLineWidth(0.6);
+            doc.rect(7, 7, 196, 283);
+
+            // --- HEADER ---
+            if (logoBase64) doc.addImage(logoBase64, 'PNG', 12, 12, 35, 35);
+
+            doc.setFont("times", "bold");
+            doc.setFontSize(26);
+            doc.setTextColor(211, 84, 0); 
+            doc.text("SARALA BIRLA UNIVERSITY", 115, 25, null, null, "center");
+            
+            doc.setFontSize(16);
+            doc.setTextColor(0, 0, 0); 
+            doc.text("Ranchi, Jharkhand", 115, 34, null, null, "center");
+            
+            doc.setDrawColor(0);
+            doc.setLineWidth(0.8);
+            doc.line(10, 48, 200, 48);
+
+            // --- EXAM DETAILS ---
+            doc.setFont("times", "bold");
+            doc.setFontSize(12);
+            doc.setTextColor(0, 0, 0);
+            
+            doc.text(`EXAM: {{ timetable.title }}`, 105, 56, null, null, "center");
+            doc.text(`ROOM: ${roomName}   |   TIME: 10:00 AM - 01:00 PM`, 105, 62, null, null, "center");
+
+            // --- TABLE PREP ---
+            const tableBody = [];
+            const rows = [];
+            let currentRow = [];
+            
+            students.sort((a,b) => a.bench - b.bench || (a.seat === 'L' ? -1 : 1));
+            students.forEach(s => { currentRow.push(s); if(currentRow.length === 6) { rows.push(currentRow); currentRow = []; } });
+            if(currentRow.length) rows.push(currentRow);
+
+            rows.forEach((row, i) => {
+                const rData = [`Row-${i+1}`];
+                for(let j=0; j<6; j++) rData.push(row[j] ? row[j].roll : '-');
+                tableBody.push(rData);
+            });
+
+            // --- DRAW MAIN TABLE ---
+            doc.autoTable({
+                startY: 70,
+                head: [['', 'Col-1', 'Col-2', 'Col-3', 'Col-4', 'Col-5', 'Col-6']],
+                body: tableBody,
+                theme: 'grid',
+                styles: { font: 'helvetica', fontSize: 8.5, cellPadding: 3, halign: 'center', valign: 'middle', lineColor: [0, 0, 0], lineWidth: 0.1, textColor: [0, 0, 0] },
+                headStyles: { fillColor: [169, 208, 245], textColor: [0, 0, 0], fontStyle: 'bold', lineWidth: 0.1, lineColor: [0, 0, 0] },
+                columnStyles: { 0: { fillColor: [248, 249, 250], fontStyle: 'bold' } },
+                margin: { left: 10, right: 10 }
+            });
+
+            // --- SUMMARY TABLE ---
+            const summary = {};
+            let total = 0;
+            students.forEach(s => {
+                const progName = (s.prog_id && programMap[s.prog_id]) ? programMap[s.prog_id] : "Allocated Students";
+                if(!summary[progName]) summary[progName] = { min: s.roll, max: s.roll, count: 0 };
+                if(s.roll < summary[progName].min) summary[progName].min = s.roll;
+                if(s.roll > summary[progName].max) summary[progName].max = s.roll;
+                summary[progName].count++;
+            });
+
+            const sumBody = [];
+            for(const [p, d] of Object.entries(summary)) { 
+                sumBody.push([`${p} [${d.min} - ${d.max}]`, d.count]); 
+                total += d.count; 
+            }
+            sumBody.push([{content: 'Total', styles: {fontStyle: 'bold', halign: 'right'}}, {content: total, styles: {fontStyle: 'bold'}}]);
+
+            doc.autoTable({
+                startY: doc.lastAutoTable.finalY + 15,
+                head: [['Program & Range', 'Count']],
+                body: sumBody,
+                theme: 'grid',
+                margin: { left: 35, right: 35 },
+                styles: { font: 'helvetica', fontSize: 9, textColor: 0, lineColor: [0, 0, 0], halign: 'left', lineWidth: 0.1 },
+                headStyles: { fillColor: [255, 255, 255], textColor: 0, fontStyle: 'bold', lineWidth: 0.1, lineColor: [0, 0, 0] },
+                columnStyles: { 1: { cellWidth: 30 } }
+            });
+
+            // --- FOOTER ---
+            doc.setFontSize(9);
+            doc.setFont("times", "bold");
+            doc.text("Examination Department, SBU", 20, 280);
+            doc.text("Controller of Examinations", 190, 280, null, null, "right");
+        }
+
+        const safeTitle = "{{ timetable.title }}".replace(/[^a-z0-9]/gi, '_').toLowerCase();
+
+        // --- HANDLE ACTIONS ---
+        if (action === 'download') {
+            doc.save(`${safeTitle}.pdf`);
+        } 
+        else if (action === 'print') { 
+            doc.autoPrint(); 
+            window.open(doc.output('bloburl'), '_blank'); 
+        } 
+        else if (action === 'share') {
+            const file = new File([doc.output('blob')], `${safeTitle}.pdf`, { type: "application/pdf" });
+            
+            // Check if device supports native file sharing (Mobile/Safari/Edge)
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({
+                        files: [file],
+                        title: 'Exam Timetable',
+                        text: 'Here is the generated exam timetable.'
+                    });
+                } catch (err) {
+                    console.log('Share canceled', err);
+                }
+            } else {
+                // Fallback for desktop browsers that don't support file sharing
+                alert("Direct file sharing to apps is not supported on your current browser. The file will be downloaded instead so you can share it manually.");
+                doc.save(`${safeTitle}.pdf`);
+            }
+        }
+    }
+
+    // Modal Logic
+    const modal = document.getElementById('printModal');
+    function openPrintModal() { modal.classList.remove('hidden'); }
+    function closePrintModal() { modal.classList.add('hidden'); }
+    function confirmPrintStickers() {
+        const pid = document.getElementById('progSelect').value;
+        window.open(`/print_stickers/{{ timetable.id }}?program_id=${pid}`, '_blank');
+        closePrintModal();
+    }
+
+    renderVisualUI(allocationList);
+</script>
+{% endblock %}

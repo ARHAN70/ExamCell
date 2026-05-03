@@ -1,0 +1,444 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    /* --- SCROLLBAR --- */
+    .custom-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+    .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+    .custom-scroll::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+    /* --- GRID CELL --- */
+    .grid-cell {
+        width: 140px;
+        height: 80px;
+        border: 1px dashed rgba(255, 255, 255, 0.1); 
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        position: relative;
+        transition: all 0.2s;
+    }
+    .grid-cell:hover {
+        background-color: rgba(255, 255, 255, 0.05);
+        border-color: #94a3b8;
+    }
+
+    /* --- BENCH CARD --- */
+    .bench-card {
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+        border: 1px solid #475569;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.2s;
+    }
+    .bench-card:hover {
+        transform: translateY(-2px);
+        border-color: #60a5fa;
+    }
+
+    /* --- DELETE BUTTON ON BENCH --- */
+    .bench-delete-btn {
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        width: 20px;
+        height: 20px;
+        background: rgba(239, 68, 68, 0.9);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: bold;
+        cursor: pointer;
+        opacity: 0;
+        transition: opacity 0.2s;
+        z-index: 10;
+    }
+    .bench-card:hover .bench-delete-btn { opacity: 1; }
+    .bench-delete-btn:hover { background: #ef4444; transform: scale(1.1); }
+
+    /* --- TOOL BUTTON STYLES (NEW AESTHETIC) --- */
+    .tool-card {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
+        background: rgba(30, 41, 59, 0.5); /* Semi-transparent Slate */
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Hover State */
+    .tool-card:hover {
+        background: rgba(51, 65, 85, 0.8);
+        border-color: rgba(148, 163, 184, 0.5);
+        transform: translateY(-1px);
+    }
+
+    /* Active State (Selected) */
+    .tool-card.active {
+        background: rgba(59, 130, 246, 0.15); /* Blue tint */
+        border: 1px solid #3b82f6; /* Solid Blue Border */
+        box-shadow: 0 0 15px rgba(59, 130, 246, 0.15);
+    }
+    
+    .tool-card.active::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: #3b82f6;
+    }
+
+    /* --- OTHER STYLES --- */
+    .bench-divider { width: 2px; height: 60%; background: linear-gradient(to bottom, transparent, #475569, transparent); }
+    .seat-half { flex: 1; height: 100%; display: flex; align-items: center; justify-content: center; opacity: 0.5; }
+    .ghost-bench { opacity: 0.5; filter: grayscale(1); transform: scale(0.98); border-style: dashed; }
+    
+    .stat-box { background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 8px 12px; text-align: center; }
+</style>
+
+<div class="flex flex-col lg:flex-row gap-6 h-auto lg:h-[85vh] max-w-full mx-auto pb-10">
+    
+    <div class="w-full lg:w-80 glass-panel p-5 rounded-2xl flex flex-col gap-4 shadow-2xl flex-shrink-0 overflow-y-auto max-h-screen">
+        
+        <div>
+            <a href="/block/{{ room.floor.block.id }}" onclick="return handleNavigation(event, this.href)" class="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-white mb-4 transition-colors group">
+                <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                Back to Block
+            </a>
+
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-white">Room {{ room.name }}</h3>
+                <button onclick="resetGrid()" class="text-[10px] text-red-400 border border-red-500/30 px-2 py-1 rounded hover:bg-red-500/10 transition">Reset</button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 mb-2">
+                <div class="stat-box">
+                    <div class="text-[10px] text-gray-400 uppercase tracking-wider">Benches</div>
+                    <div class="text-2xl font-bold text-blue-400" id="stat-benches">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="text-[10px] text-gray-400 uppercase tracking-wider">Capacity</div>
+                    <div class="text-2xl font-bold text-emerald-400" id="stat-capacity">0</div>
+                </div>
+            </div>
+        </div>
+        
+        <hr class="border-gray-700 opacity-50">
+
+        <div class="bg-gray-800/40 p-3 rounded-xl border border-blue-500/20">
+            <p class="text-[10px] text-blue-300 font-bold uppercase mb-2">⚡ Auto-Fill Generator</p>
+            <div class="grid grid-cols-2 gap-2 mb-2">
+                <div>
+                    <label class="text-[9px] text-gray-400 uppercase block mb-1">Rows</label>
+                    <input type="number" id="auto-rows" placeholder="ex: 5" class="w-full bg-gray-900 border border-gray-600 rounded p-1 text-sm text-white focus:border-blue-500 outline-none">
+                </div>
+                <div>
+                    <label class="text-[9px] text-gray-400 uppercase block mb-1">Cols</label>
+                    <input type="number" id="auto-cols" placeholder="ex: 4" class="w-full bg-gray-900 border border-gray-600 rounded p-1 text-sm text-white focus:border-blue-500 outline-none">
+                </div>
+            </div>
+            <button onclick="autoFill()" class="w-full py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-xs font-bold text-white transition shadow-lg shadow-blue-500/20">
+                Generate Layout
+            </button>
+        </div>
+
+        <div class="space-y-3">
+            <p class="text-xs text-gray-500 font-bold uppercase">Manual Tools</p>
+            
+            <div onclick="setTool('bench', this)" class="tool-card active group">
+                <div class="w-10 h-8 border border-gray-500 rounded bg-gray-900 flex items-center justify-center group-hover:border-white transition-colors">
+                    <div class="w-[1px] h-4 bg-gray-500 group-hover:bg-white"></div>
+                </div>
+                <div>
+                    <div class="font-bold text-gray-200 text-sm group-hover:text-white">Add Bench</div>
+                    <div class="text-[10px] text-gray-500 group-hover:text-gray-400">Click empty slot</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="space-y-3 mt-auto">
+            <p class="text-xs text-gray-500 font-bold uppercase">Grid Size</p>
+            <div class="flex items-center gap-2">
+                <span class="text-xs text-gray-400 w-8">Rows</span>
+                <button onclick="deleteRow()" class="flex-1 py-2 bg-gray-800 border border-gray-600 rounded hover:bg-red-900/30 text-xs font-bold">-</button>
+                <button onclick="addRow()" class="flex-1 py-2 bg-gray-800 border border-gray-600 rounded hover:bg-blue-900/30 text-xs font-bold">+</button>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="text-xs text-gray-400 w-8">Cols</span>
+                <button onclick="deleteCol()" class="flex-1 py-2 bg-gray-800 border border-gray-600 rounded hover:bg-red-900/30 text-xs font-bold">-</button>
+                <button onclick="addCol()" class="flex-1 py-2 bg-gray-800 border border-gray-600 rounded hover:bg-blue-900/30 text-xs font-bold">+</button>
+            </div>
+        </div>
+
+        <div class="pt-2">
+            <button onclick="saveLayout()" id="saveBtn" class="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl font-bold text-white shadow-lg hover:shadow-emerald-500/50 active:scale-95 transition-all">
+                Save Layout
+            </button>
+        </div>
+    </div>
+
+    <div class="flex-1 glass-panel rounded-2xl overflow-hidden bg-darkbg/80 relative flex flex-col border border-gray-700/50 shadow-inner min-h-[400px]">
+        
+        <div class="overflow-auto flex-1 w-full h-full custom-scroll p-4 lg:p-8" id="scroll-wrapper">
+            <div id="editor-grid" class="grid gap-4 p-8 border border-dashed border-gray-700/30 rounded-xl bg-gray-900/30 transition-all duration-300 w-max mx-auto">
+            </div>
+        </div>
+        
+        <div class="absolute bottom-4 right-4 bg-gray-900/90 backdrop-blur px-3 py-1 rounded-lg text-xs font-mono text-gray-400 border border-gray-700 pointer-events-none shadow-lg">
+            <span id="dims-display" class="text-blue-400 font-bold">1 x 1</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentTool = 'bench'; 
+    const roomId = {{ room.id }};
+    
+    // UNSAVED CHANGES TRACKER
+    let hasUnsavedChanges = false;
+
+    // Load Size
+    let totalRows = {{ room.rows if room.rows else 1 }};
+    let totalCols = {{ room.cols if room.cols else 1 }};
+    
+    const loadedLayout = JSON.parse('{{ room.layout_data|safe }}' || '[]');
+    const gridContainer = document.getElementById('editor-grid');
+    const dimsDisplay = document.getElementById('dims-display');
+    const saveBtn = document.getElementById('saveBtn');
+
+    // --- MARK DIRTY FUNCTION ---
+    function markDirty() {
+        hasUnsavedChanges = true;
+        saveBtn.innerText = "Save Layout *"; 
+        saveBtn.classList.add("ring-2", "ring-yellow-400"); 
+    }
+    
+    // --- MARK CLEAN FUNCTION ---
+    function markClean() {
+        hasUnsavedChanges = false;
+        saveBtn.innerText = "Save Layout";
+        saveBtn.classList.remove("ring-2", "ring-yellow-400");
+    }
+
+    // --- NAVIGATION GUARD ---
+    function handleNavigation(event, url) {
+        if (hasUnsavedChanges) {
+            event.preventDefault(); 
+            const choice = confirm("⚠️ You have unsaved changes!\n\nDo you want to leave without saving?");
+            if (choice) {
+                window.location.href = url; 
+            }
+        }
+    }
+
+    window.onbeforeunload = function() {
+        if (hasUnsavedChanges) {
+            return "You have unsaved changes. Are you sure you want to leave?";
+        }
+    };
+
+    // --- AUTO FILL ---
+    function autoFill() {
+        const fillRows = parseInt(document.getElementById('auto-rows').value);
+        const fillCols = parseInt(document.getElementById('auto-cols').value);
+        if(!fillRows || !fillCols) return;
+
+        if(fillRows > totalRows) totalRows = fillRows;
+        if(fillCols > totalCols) totalCols = fillCols;
+
+        saveToMemoryAndReinit(); 
+        
+        let count = 0;
+        document.querySelectorAll('.grid-cell').forEach(cell => {
+            let r = parseInt(cell.dataset.r);
+            let c = parseInt(cell.dataset.c);
+            if(r < fillRows && c < fillCols) {
+                setCellContent(cell, 'bench');
+                count++;
+            }
+        });
+        updateStats();
+        markDirty(); 
+    }
+
+    function updateStats() {
+        const benchCount = document.querySelectorAll('.grid-cell[data-type="bench"]').length;
+        document.getElementById('stat-benches').innerText = benchCount;
+        document.getElementById('stat-capacity').innerText = benchCount * 2; 
+    }
+
+    function initGrid() {
+        gridContainer.innerHTML = '';
+        gridContainer.style.gridTemplateColumns = `repeat(${totalCols}, 140px)`;
+        dimsDisplay.innerText = `${totalRows} Rows x ${totalCols} Cols`;
+
+        for(let r=0; r < totalRows; r++) {
+            for(let c=0; c < totalCols; c++) {
+                let cell = document.createElement('div');
+                cell.className = 'grid-cell';
+                cell.dataset.r = r;
+                cell.dataset.c = c;
+                
+                cell.onclick = () => applyTool(cell);
+                cell.onmouseenter = () => showGhost(cell);
+                cell.onmouseleave = () => hideGhost(cell);
+
+                let existing = loadedLayout.find(i => i.r == r && i.c == c);
+                if(existing) setCellContent(cell, existing.type);
+                
+                gridContainer.appendChild(cell);
+            }
+        }
+        updateStats(); 
+    }
+
+    function resetGrid() {
+        if(confirm("Clear entire layout?")) {
+            totalRows = 1; totalCols = 1;
+            document.querySelectorAll('.grid-cell').forEach(c => c.innerHTML = '');
+            initGrid();
+            markDirty();
+        }
+    }
+
+    // --- TOOLS ---
+    function setTool(tool, card) {
+        currentTool = tool;
+        document.querySelectorAll('.tool-card').forEach(c => c.classList.remove('active'));
+        if(card) card.classList.add('active');
+    }
+
+    function showGhost(cell) {
+        if(cell.dataset.type) return;
+        if(currentTool === 'bench') {
+            cell.innerHTML = getBenchHTML(); 
+            cell.querySelector('.bench-card').classList.add('ghost-bench');
+            cell.querySelector('.bench-delete-btn').style.display = 'none';
+        }
+    }
+
+    function hideGhost(cell) {
+        if(cell.dataset.type) return;
+        cell.innerHTML = '';
+    }
+
+    function applyTool(cell) {
+        if(currentTool === 'bench') {
+            setCellContent(cell, 'bench');
+            markDirty();
+        }
+    }
+
+    window.removeBench = function(e, btn) {
+        e.stopPropagation(); 
+        const cell = btn.closest('.grid-cell');
+        cell.innerHTML = '';
+        delete cell.dataset.type;
+        cell.classList.remove('ghost-bench');
+        updateStats(); 
+        markDirty();
+    }
+
+    function setCellContent(cell, type) {
+        cell.innerHTML = '';
+        cell.dataset.type = type;
+        if(type === 'bench') cell.innerHTML = getBenchHTML();
+        updateStats();
+    }
+
+    function getBenchHTML() {
+        const userIcon = `<svg class="w-6 h-6 text-blue-300 drop-shadow-md" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>`;
+        return `
+            <div class="bench-card">
+                <div class="bench-delete-btn" onclick="removeBench(event, this)">×</div>
+                <div class="seat-half">${userIcon}</div>
+                <div class="bench-divider"></div>
+                <div class="seat-half">${userIcon}</div>
+            </div>
+        `;
+    }
+
+    // --- RESIZE LOGIC ---
+    function addRow() { totalRows++; saveToMemoryAndReinit(); markDirty(); }
+    function addCol() { totalCols++; saveToMemoryAndReinit(); markDirty(); }
+    function deleteRow() { if(totalRows > 1) { totalRows--; saveToMemoryAndReinit(); markDirty(); } }
+    function deleteCol() { if(totalCols > 1) { totalCols--; saveToMemoryAndReinit(); markDirty(); } }
+
+    function saveToMemoryAndReinit() {
+        let currentData = [];
+        document.querySelectorAll('.grid-cell').forEach(cell => {
+            let r = parseInt(cell.dataset.r);
+            let c = parseInt(cell.dataset.c);
+            if(cell.dataset.type && r < totalRows && c < totalCols) {
+                currentData.push({ r: r, c: c, type: cell.dataset.type });
+            }
+        });
+        
+        gridContainer.innerHTML = '';
+        gridContainer.style.gridTemplateColumns = `repeat(${totalCols}, 140px)`;
+        dimsDisplay.innerText = `${totalRows} Rows x ${totalCols} Cols`;
+
+        for(let r=0; r < totalRows; r++) {
+            for(let c=0; c < totalCols; c++) {
+                let cell = document.createElement('div');
+                cell.className = 'grid-cell';
+                cell.dataset.r = r;
+                cell.dataset.c = c;
+                cell.onclick = () => applyTool(cell);
+                cell.onmouseenter = () => showGhost(cell);
+                cell.onmouseleave = () => hideGhost(cell);
+                let existing = currentData.find(i => i.r == r && i.c == c);
+                if(existing) setCellContent(cell, existing.type);
+                gridContainer.appendChild(cell);
+            }
+        }
+        updateStats();
+    }
+
+    // --- SAVE ---
+    async function saveLayout() {
+        let layout = [];
+        document.querySelectorAll('.grid-cell').forEach(cell => {
+            if(cell.dataset.type) {
+                layout.push({ r: cell.dataset.r, c: cell.dataset.c, type: cell.dataset.type });
+            }
+        });
+
+        const btn = document.getElementById('saveBtn');
+        const oldText = btn.innerHTML;
+        btn.innerHTML = 'Saving...';
+
+        await fetch('/save_layout', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ room_id: roomId, layout: layout, rows: totalRows, cols: totalCols })
+        });
+        
+        btn.innerHTML = '✅ Saved!';
+        markClean(); 
+        
+        setTimeout(() => btn.innerHTML = oldText, 2000);
+    }
+
+    initGrid();
+</script>
+{% endblock %}

@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 py-6 md:py-12">
+    
+    <!-- Header Section: Centered and scaled for mobile -->
+    <div class="text-center mb-8 md:mb-10">
+        <h1 class="text-3xl md:text-4xl font-extrabold text-white mb-2">Exam <span class="text-blue-500">Invigilation</span></h1>
+        <p class="text-sm md:text-base text-gray-400 px-4">Manage attendance and scan answer sheets directly from your device.</p>
+    </div>
+
+    {% if active_sessions %}
+    <div class="mb-10 md:mb-12">
+        <h3 class="text-emerald-400 font-bold uppercase tracking-widest text-[10px] md:text-sm mb-4 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Live Sessions (Today)
+        </h3>
+        
+        <!-- Live Sessions Grid: Stacks on mobile, 2 columns on tablets/desktops -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% for session in active_sessions %}
+            <form action="{{ url_for('invigilator_scanner') }}" method="POST" class="w-full">
+                <input type="hidden" name="subject_name" value="{{ session.subject_name }}">
+                <input type="hidden" name="subject_code" value="{{ session.subject_code }}">
+                <input type="hidden" name="date" value="{{ session.exam_date }}">
+                <input type="hidden" name="time" value="{{ session.exam_time }}">
+                <input type="hidden" name="block" value="{{ session.block }}">
+                <input type="hidden" name="room" value="{{ session.room_no }}">
+                <input type="hidden" name="program_id" value="{{ session.program_id }}">
+
+                <button type="submit" class="w-full text-left bg-gray-800/80 hover:bg-gray-750 border border-emerald-500/30 hover:border-emerald-500/60 p-4 md:p-5 rounded-2xl transition group relative overflow-hidden shadow-lg active:scale-95">
+                    <!-- Icon: Hidden on very small screens to save space -->
+                    <div class="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition hidden sm:block">
+                        <svg class="w-12 h-12 md:w-16 md:h-16 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+                    </div>
+                    
+                    <div class="relative z-10">
+                        <div class="flex justify-between items-start mb-2 gap-2">
+                            <h4 class="text-lg md:text-xl font-bold text-white group-hover:text-emerald-400 transition leading-tight">{{ session.subject_name }}</h4>
+                            <span class="shrink-0 bg-emerald-500/10 text-emerald-400 text-[10px] font-mono px-2 py-1 rounded border border-emerald-500/20">{{ session.subject_code }}</span>
+                        </div>
+                        
+                        <div class="flex flex-col gap-1.5 text-xs md:text-sm text-gray-400">
+                            <span class="flex items-center gap-2">
+                                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> 
+                                {{ session.exam_time }}
+                            </span>
+                            <span class="flex items-center gap-2 text-white/90 font-medium italic">
+                                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg> 
+                                {{ session.program_name }} ({{ session.academic_year }})
+                            </span>
+                        </div>
+                        
+                        <!-- Resume Prompt: Mobile visible by default, Desktop on hover -->
+                        <div class="mt-4 flex items-center text-emerald-500 text-xs md:text-sm font-bold opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all transform translate-y-0 md:translate-y-2 md:group-hover:translate-y-0">
+                            Resume Scanning <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+                        </div>
+                    </div>
+                </button>
+            </form>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Form Section -->
+    <div class="bg-[#0f172a] border border-gray-700 p-5 md:p-8 rounded-3xl shadow-2xl relative overflow-hidden">
+        <div class="mb-6 border-b border-gray-800 pb-4">
+            <h2 class="text-xl font-bold text-white">Start New Session</h2>
+            <p class="text-[10px] md:text-xs text-gray-500">Manual setup for unscheduled or special examinations.</p>
+        </div>
+
+        <form action="{{ url_for('invigilator_scanner') }}" method="POST" class="space-y-5 md:space-y-6" onsubmit="return checkDuplicateSession()">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
+                <div class="md:col-span-2">
+                    <label class="block text-gray-500 text-[10px] font-bold uppercase tracking-wider mb-2">Program (Course)</label>
+                    <select name="program_id" id="new_program" required class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 text-white text-sm focus:border-blue-500 outline-none transition appearance-none">
+                        <option value="" disabled selected>Select Program</option>
+                        {% for p in programs %}
+                        <option value="{{ p.id }}">{{ p.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-gray-500 text-[10px] font-bold uppercase tracking-wider mb-2">Exam Date</label>
+                    <input type="date" name="date" id="new_date" required class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 text-white text-sm focus:border-blue-500 outline-none transition color-scheme-dark">
+                </div>
+                <div>
+                    <label class="block text-gray-500 text-[10px] font-bold uppercase tracking-wider mb-2">Time Slot</label>
+                    <select name="time" id="new_time" class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 text-white text-sm focus:border-blue-500 outline-none transition appearance-none">
+                        <!-- ADDED NEW TIMINGS HERE -->
+                        <option>09:00 AM - 12:00 PM</option>
+                        <option>10:00 AM - 01:00 PM</option>
+                        <option>02:00 PM - 05:00 PM</option>
+                        <option>11:00 PM - 01:00 AM</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
+                <div>
+                    <label class="block text-gray-500 text-[10px] font-bold uppercase tracking-wider mb-2">Subject Name</label>
+                    <input type="text" name="subject_name" placeholder="e.g. Data Structures" required class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 text-white text-sm focus:border-blue-500 outline-none transition placeholder:text-gray-700">
+                </div>
+                <div>
+                    <label class="block text-gray-500 text-[10px] font-bold uppercase tracking-wider mb-2">Subject Code</label>
+                    <input type="text" name="subject_code" id="new_code" placeholder="e.g. CS102" required class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 text-white text-sm focus:border-blue-500 outline-none transition placeholder:text-gray-700">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
+                <div>
+                    <label class="block text-gray-500 text-[10px] font-bold uppercase tracking-wider mb-2">Block Name</label>
+                    <input type="text" name="block" placeholder="e.g. Admin Block" required class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 text-white text-sm focus:border-blue-500 outline-none transition">
+                </div>
+                <div>
+                    <label class="block text-gray-500 text-[10px] font-bold uppercase tracking-wider mb-2">Room Number</label>
+                    <input type="text" name="room" id="new_room" placeholder="e.g. 101" required class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 text-white text-sm focus:border-blue-500 outline-none transition">
+                </div>
+            </div>
+
+            <button type="submit" class="w-full py-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-base md:text-lg shadow-lg hover:shadow-blue-500/30 active:scale-95 transition transform">
+                Create Session & Start Scanning
+            </button>
+
+        </form>
+    </div>
+</div>
+
+<style>
+    /* Ensures native date pickers look okay in dark mode on mobile */
+    .color-scheme-dark {
+        color-scheme: dark;
+    }
+</style>
+
+<script>
+    const existingSessions = [
+        {% for s in active_sessions %}
+        {
+            code: "{{ s.subject_code }}",
+            room: "{{ s.room_no }}",
+            date: "{{ s.exam_date }}",
+            program: "{{ s.program_id }}"
+        },
+        {% endfor %}
+    ];
+
+    function checkDuplicateSession() {
+        const newCode = document.getElementById('new_code').value.trim();
+        const newRoom = document.getElementById('new_room').value.trim();
+        const newDate = document.getElementById('new_date').value;
+        const newProg = document.getElementById('new_program').value;
+
+        const isDuplicate = existingSessions.some(s => 
+            s.code === newCode && s.room === newRoom && s.date === newDate && s.program === newProg
+        );
+
+        if (isDuplicate) {
+            alert("⚠️ SESSION ALREADY ACTIVE!\n\nThis session is already running today.\nPlease click 'Resume Scanning' at the top of the page.");
+            return false;
+        }
+        return true;
+    }
+</script>
+{% endblock %}

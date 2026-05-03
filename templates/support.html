@@ -1,0 +1,349 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    /* Styling for FAQ Accordion */
+    details > summary { list-style: none; }
+    details > summary::-webkit-details-marker { display: none; }
+    
+    .glass-card {
+        background: rgba(30, 41, 59, 0.4);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 20px;
+        transition: all 0.3s ease;
+    }
+    
+    .custom-input {
+        background: rgba(15, 23, 42, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: white;
+        transition: 0.3s;
+    }
+    .custom-input:focus { border-color: #34d399; outline: none; }
+</style>
+
+<div class="max-w-5xl mx-auto px-4 py-16">
+    
+    <div class="text-center mb-12 relative">
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-blue-500/10 rounded-full blur-[100px] -z-10"></div>
+        <h1 class="text-5xl font-extrabold text-white mb-4">Help & <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">Support</span></h1>
+        <p class="text-slate-400 text-lg">We are here to assist you with your examination system.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+        
+        <div class="glass-card p-6 text-center group hover:bg-slate-800/60 hover:-translate-y-1 transition border-t-4 border-t-blue-500">
+            <div class="w-14 h-14 mx-auto rounded-full bg-blue-500/10 flex items-center justify-center mb-4 group-hover:bg-blue-500/20 transition">
+                <svg class="w-7 h-7 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-1">Email Support</h3>
+            <p class="text-slate-400 text-sm mb-3">For technical queries</p>
+            <a href="mailto:arhanakhtar.in@gmail.com" class="text-blue-400 font-bold hover:underline">arhanakhtar.in@gmail.com</a>
+        </div>
+
+        <div class="glass-card p-6 text-center group hover:bg-slate-800/60 hover:-translate-y-1 transition border-t-4 border-t-emerald-500">
+            <div class="w-14 h-14 mx-auto rounded-full bg-emerald-500/10 flex items-center justify-center mb-4 group-hover:bg-emerald-500/20 transition">
+                <svg class="w-7 h-7 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-1">Helpline</h3>
+            <p class="text-slate-400 text-sm mb-3">Direct assistance</p>
+            <a href="tel:+917903229761" class="text-emerald-400 font-bold hover:underline">+91 7903229761</a>
+        </div>
+
+        <div class="glass-card p-6 text-center group hover:bg-slate-800/60 hover:-translate-y-1 transition border-t-4 border-t-amber-500">
+            <div class="w-14 h-14 mx-auto rounded-full bg-amber-500/10 flex items-center justify-center mb-4 group-hover:bg-amber-500/20 transition">
+                <svg class="w-7 h-7 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-1">Operating Hours</h3>
+            <p class="text-slate-400 text-sm mb-3">Mon - Sat</p>
+            <span class="text-amber-400 font-bold">9:00 AM - 5:00 PM</span>
+        </div>
+
+    </div>
+
+    <div class="glass-card p-8 md:p-12 mb-20 shadow-2xl relative overflow-hidden">
+        <div class="absolute top-0 right-0 p-8 opacity-5 transform rotate-12 pointer-events-none">
+            <svg class="w-64 h-64 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+        </div>
+
+        <h2 class="text-2xl font-bold text-white mb-8 border-b border-gray-700 pb-4">Submit a Ticket</h2>
+        
+        <form action="https://formspree.io/f/mlgzgkkk" method="POST">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <label class="block text-slate-400 text-xs font-bold mb-2 uppercase tracking-wider">Faculty Name</label>
+                    <input type="text" name="Faculty_Name" class="custom-input w-full p-4 rounded-xl" placeholder="Dr. John Doe" required>
+                </div>
+                <div>
+                    <label class="block text-slate-400 text-xs font-bold mb-2 uppercase tracking-wider">Official Email</label>
+                    <input type="email" name="email" class="custom-input w-full p-4 rounded-xl" placeholder="admin@sbu.ac.in" required>
+                </div>
+            </div>
+            
+            <div class="mb-6">
+                <label class="block text-slate-400 text-xs font-bold mb-2 uppercase tracking-wider">Issue Category</label>
+                <select name="Issue_Category" class="custom-input w-full p-4 rounded-xl text-gray-300" required>
+                    <option value="Login / Access Issue">Login / Access Issue</option>
+                    <option value="Data Upload Error">Data Upload Error</option>
+                    <option value="Allocation Algorithm Issue">Allocation Algorithm Issue</option>
+                    <option value="Printing / PDF Error">Printing / PDF Error</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+        
+            <div class="mb-8">
+                <label class="block text-slate-400 text-xs font-bold mb-2 uppercase tracking-wider">Message Details</label>
+                <textarea name="Message" class="custom-input w-full p-4 rounded-xl h-40" placeholder="Describe the issue you are facing..." required></textarea>
+            </div>
+        
+            <div class="text-right">
+                <button type="submit" class="px-10 py-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold hover:shadow-lg hover:shadow-blue-500/30 transition transform hover:-translate-y-1">
+                    Send Request
+                </button>
+            </div>
+        </form>
+        </div>
+
+    <div id="faq" class="mb-20">
+        <h2 class="text-3xl font-bold text-white mb-8 text-center">Frequently Asked Questions</h2>
+        
+        <div class="space-y-4">
+            
+            <div class="flex items-center gap-2 mb-4 mt-8">
+                <span class="h-px w-12 bg-emerald-500"></span>
+                <span class="text-sm font-bold text-emerald-400 uppercase tracking-widest">General</span>
+            </div>
+
+            <details class="group bg-slate-800/40 border border-slate-700 rounded-xl overflow-hidden transition-all duration-300 open:bg-slate-800/80">
+                <summary class="flex justify-between items-center p-5 cursor-pointer font-medium text-white hover:text-cyan-400 transition">
+                    What is ExamCell AI used for?
+                    <span class="transition-transform group-open:rotate-180"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></span>
+                </summary>
+                <div class="px-5 pb-5 text-sm text-slate-300 leading-relaxed border-t border-slate-700/50 pt-4">
+                    It is a web-based automated examination management system designed to handle seating arrangements, room mapping, and student data management for universities.
+                </div>
+            </details>
+
+            <details class="group bg-slate-800/40 border border-slate-700 rounded-xl overflow-hidden transition-all duration-300 open:bg-slate-800/80">
+                <summary class="flex justify-between items-center p-5 cursor-pointer font-medium text-white hover:text-cyan-400 transition">
+                    Does this system require an internet connection?
+                    <span class="transition-transform group-open:rotate-180"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></span>
+                </summary>
+                <div class="px-5 pb-5 text-sm text-slate-300 leading-relaxed border-t border-slate-700/50 pt-4">
+                    No, if installed on a local server (localhost), it works completely offline. However, cloud-hosted versions require internet access.
+                </div>
+            </details>
+
+            <details class="group bg-slate-800/40 border border-slate-700 rounded-xl overflow-hidden transition-all duration-300 open:bg-slate-800/80">
+                <summary class="flex justify-between items-center p-5 cursor-pointer font-medium text-white hover:text-cyan-400 transition">
+                    Is there a limit to the number of students?
+                    <span class="transition-transform group-open:rotate-180"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></span>
+                </summary>
+                <div class="px-5 pb-5 text-sm text-slate-300 leading-relaxed border-t border-slate-700/50 pt-4">
+                    There is no hardcoded limit. The system can handle thousands of students as long as your database and server hardware can support it.
+                </div>
+            </details>
+
+            <div class="flex items-center gap-2 mb-4 mt-8">
+                <span class="h-px w-12 bg-blue-500"></span>
+                <span class="text-sm font-bold text-blue-400 uppercase tracking-widest">Data & Setup</span>
+            </div>
+
+            <details class="group bg-slate-800/40 border border-slate-700 rounded-xl overflow-hidden transition-all duration-300 open:bg-slate-800/80">
+                <summary class="flex justify-between items-center p-5 cursor-pointer font-medium text-white hover:text-cyan-400 transition">
+                    What file formats are supported for bulk upload?
+                    <span class="transition-transform group-open:rotate-180"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></span>
+                </summary>
+                <div class="px-5 pb-5 text-sm text-slate-300 leading-relaxed border-t border-slate-700/50 pt-4">
+                    We support <strong>.csv</strong> and <strong>.xlsx</strong> (Excel) files. Ensure your file has headers like 'Name', 'Roll No', and 'Reg No'.
+                </div>
+            </details>
+
+            <details class="group bg-slate-800/40 border border-slate-700 rounded-xl overflow-hidden transition-all duration-300 open:bg-slate-800/80">
+                <summary class="flex justify-between items-center p-5 cursor-pointer font-medium text-white hover:text-cyan-400 transition">
+                    Can I edit a room layout after creating it?
+                    <span class="transition-transform group-open:rotate-180"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></span>
+                </summary>
+                <div class="px-5 pb-5 text-sm text-slate-300 leading-relaxed border-t border-slate-700/50 pt-4">
+                    Yes! Go to the Campus page, select the block, find the room, and click "Editor". You can drag, drop, or remove benches anytime.
+                </div>
+            </details>
+
+            <details class="group bg-slate-800/40 border border-slate-700 rounded-xl overflow-hidden transition-all duration-300 open:bg-slate-800/80">
+                <summary class="flex justify-between items-center p-5 cursor-pointer font-medium text-white hover:text-cyan-400 transition">
+                    How do I delete specific students?
+                    <span class="transition-transform group-open:rotate-180"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></span>
+                </summary>
+                <div class="px-5 pb-5 text-sm text-slate-300 leading-relaxed border-t border-slate-700/50 pt-4">
+                    Currently, you can use the "Delete All" button for a specific program. Individual student deletion will be added in a future update.
+                </div>
+            </details>
+
+            <details class="group bg-slate-800/40 border border-slate-700 rounded-xl overflow-hidden transition-all duration-300 open:bg-slate-800/80">
+                <summary class="flex justify-between items-center p-5 cursor-pointer font-medium text-white hover:text-cyan-400 transition">
+                    What happens if I upload duplicate student data?
+                    <span class="transition-transform group-open:rotate-180"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></span>
+                </summary>
+                <div class="px-5 pb-5 text-sm text-slate-300 leading-relaxed border-t border-slate-700/50 pt-4">
+                    The system uses unique IDs. If a Roll Number matches an existing record, the upload might be skipped or duplicated depending on settings. It is best to clear old data first.
+                </div>
+            </details>
+
+            <details class="group bg-slate-800/40 border border-slate-700 rounded-xl overflow-hidden transition-all duration-300 open:bg-slate-800/80">
+                <summary class="flex justify-between items-center p-5 cursor-pointer font-medium text-white hover:text-cyan-400 transition">
+                    How do I handle students with backlogs?
+                    <span class="transition-transform group-open:rotate-180"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></span>
+                </summary>
+                <div class="px-5 pb-5 text-sm text-slate-300 leading-relaxed border-t border-slate-700/50 pt-4">
+                    Create a separate "Program" named "Backlog Exam" and upload the list of those students there. Select this program during allocation.
+                </div>
+            </details>
+
+            <div class="flex items-center gap-2 mb-4 mt-8">
+                <span class="h-px w-12 bg-purple-500"></span>
+                <span class="text-sm font-bold text-purple-400 uppercase tracking-widest">Allocation Logic</span>
+            </div>
+
+            <details class="group bg-slate-800/40 border border-slate-700 rounded-xl overflow-hidden transition-all duration-300 open:bg-slate-800/80">
+                <summary class="flex justify-between items-center p-5 cursor-pointer font-medium text-white hover:text-cyan-400 transition">
+                    How does the "Non-Adjacent" logic work?
+                    <span class="transition-transform group-open:rotate-180"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></span>
+                </summary>
+                <div class="px-5 pb-5 text-sm text-slate-300 leading-relaxed border-t border-slate-700/50 pt-4">
+                    The algorithm alternates students from different selected programs (e.g., Program A student, then Program B student) to ensure neighbors are taking different exams.
+                </div>
+            </details>
+
+            <details class="group bg-slate-800/40 border border-slate-700 rounded-xl overflow-hidden transition-all duration-300 open:bg-slate-800/80">
+                <summary class="flex justify-between items-center p-5 cursor-pointer font-medium text-white hover:text-cyan-400 transition">
+                    Can I manually change a seat after allocation?
+                    <span class="transition-transform group-open:rotate-180"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></span>
+                </summary>
+                <div class="px-5 pb-5 text-sm text-slate-300 leading-relaxed border-t border-slate-700/50 pt-4">
+                    Currently, the system is fully automated to prevent bias. You would need to re-run the allocation to change seats.
+                </div>
+            </details>
+
+            <details class="group bg-slate-800/40 border border-slate-700 rounded-xl overflow-hidden transition-all duration-300 open:bg-slate-800/80">
+                <summary class="flex justify-between items-center p-5 cursor-pointer font-medium text-white hover:text-cyan-400 transition">
+                    What if there are more students than seats?
+                    <span class="transition-transform group-open:rotate-180"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></span>
+                </summary>
+                <div class="px-5 pb-5 text-sm text-slate-300 leading-relaxed border-t border-slate-700/50 pt-4">
+                    The allocation process will stop when rooms are full. You should always ensure Total Capacity > Total Students in the Allocation dashboard before running.
+                </div>
+            </details>
+
+            <details class="group bg-slate-800/40 border border-slate-700 rounded-xl overflow-hidden transition-all duration-300 open:bg-slate-800/80">
+                <summary class="flex justify-between items-center p-5 cursor-pointer font-medium text-white hover:text-cyan-400 transition">
+                    Can I run allocation for just one department?
+                    <span class="transition-transform group-open:rotate-180"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></span>
+                </summary>
+                <div class="px-5 pb-5 text-sm text-slate-300 leading-relaxed border-t border-slate-700/50 pt-4">
+                    Yes, select only that specific Program in the "Allocation" page checklist. However, the anti-cheat adjacency logic works best with 2+ programs.
+                </div>
+            </details>
+
+            <details class="group bg-slate-800/40 border border-slate-700 rounded-xl overflow-hidden transition-all duration-300 open:bg-slate-800/80">
+                <summary class="flex justify-between items-center p-5 cursor-pointer font-medium text-white hover:text-cyan-400 transition">
+                    How long does the allocation process take?
+                    <span class="transition-transform group-open:rotate-180"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></span>
+                </summary>
+                <div class="px-5 pb-5 text-sm text-slate-300 leading-relaxed border-t border-slate-700/50 pt-4">
+                    For a typical dataset of 500-2000 students, the AI algorithm completes the task in less than 2 seconds.
+                </div>
+            </details>
+
+            <div class="flex items-center gap-2 mb-4 mt-8">
+                <span class="h-px w-12 bg-pink-500"></span>
+                <span class="text-sm font-bold text-pink-400 uppercase tracking-widest">Printing & Technical</span>
+            </div>
+
+            <details class="group bg-slate-800/40 border border-slate-700 rounded-xl overflow-hidden transition-all duration-300 open:bg-slate-800/80">
+                <summary class="flex justify-between items-center p-5 cursor-pointer font-medium text-white hover:text-cyan-400 transition">
+                    How do I delete a published timetable?
+                    <span class="transition-transform group-open:rotate-180"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></span>
+                </summary>
+                <div class="px-5 pb-5 text-sm text-slate-300 leading-relaxed border-t border-slate-700/50 pt-4">
+                    Go to the "Exam Timetable" page. You will see a list of published exams. Click the red "Delete" icon to remove it from the history.
+                </div>
+            </details>
+
+            <details class="group bg-slate-800/40 border border-slate-700 rounded-xl overflow-hidden transition-all duration-300 open:bg-slate-800/80">
+                <summary class="flex justify-between items-center p-5 cursor-pointer font-medium text-white hover:text-cyan-400 transition">
+                    How do I scan the student QR codes?
+                    <span class="transition-transform group-open:rotate-180"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></span>
+                </summary>
+                <div class="px-5 pb-5 text-sm text-slate-300 leading-relaxed border-t border-slate-700/50 pt-4">
+                    Any standard smartphone camera or QR code scanner app can scan the code. It redirects to a verified student profile page on the system.
+                </div>
+            </details>
+
+            <details class="group bg-slate-800/40 border border-slate-700 rounded-xl overflow-hidden transition-all duration-300 open:bg-slate-800/80">
+                <summary class="flex justify-between items-center p-5 cursor-pointer font-medium text-white hover:text-cyan-400 transition">
+                    Can I resize the stickers?
+                    <span class="transition-transform group-open:rotate-180"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></span>
+                </summary>
+                <div class="px-5 pb-5 text-sm text-slate-300 leading-relaxed border-t border-slate-700/50 pt-4">
+                    The system generates a standard HTML/PDF layout optimized for A4 paper. You can adjust the "Scale" in your printer settings dialog box.
+                </div>
+            </details>
+
+            <details class="group bg-slate-800/40 border border-slate-700 rounded-xl overflow-hidden transition-all duration-300 open:bg-slate-800/80">
+                <summary class="flex justify-between items-center p-5 cursor-pointer font-medium text-white hover:text-cyan-400 transition">
+                    Is my data secure?
+                    <span class="transition-transform group-open:rotate-180"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></span>
+                </summary>
+                <div class="px-5 pb-5 text-sm text-slate-300 leading-relaxed border-t border-slate-700/50 pt-4">
+                    Yes. Data is stored in a local SQLite database. Passwords are handled securely. For production use, ensure your server has proper firewalls.
+                </div>
+            </details>
+
+            <details class="group bg-slate-800/40 border border-slate-700 rounded-xl overflow-hidden transition-all duration-300 open:bg-slate-800/80">
+                <summary class="flex justify-between items-center p-5 cursor-pointer font-medium text-white hover:text-cyan-400 transition">
+                    Can multiple admins log in at once?
+                    <span class="transition-transform group-open:rotate-180"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></span>
+                </summary>
+                <div class="px-5 pb-5 text-sm text-slate-300 leading-relaxed border-t border-slate-700/50 pt-4">
+                    Yes, you can create multiple faculty accounts via the "Sign Up" page. Each admin has full access to the system.
+                </div>
+            </details>
+
+            <details class="group bg-slate-800/40 border border-slate-700 rounded-xl overflow-hidden transition-all duration-300 open:bg-slate-800/80">
+                <summary class="flex justify-between items-center p-5 cursor-pointer font-medium text-white hover:text-cyan-400 transition">
+                    What if a room is under maintenance?
+                    <span class="transition-transform group-open:rotate-180"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></span>
+                </summary>
+                <div class="px-5 pb-5 text-sm text-slate-300 leading-relaxed border-t border-slate-700/50 pt-4">
+                    Simply go to the Campus editor and delete the benches from that room (or set capacity to 0). The algorithm will automatically skip it.
+                </div>
+            </details>
+
+            <details class="group bg-slate-800/40 border border-slate-700 rounded-xl overflow-hidden transition-all duration-300 open:bg-slate-800/80">
+                <summary class="flex justify-between items-center p-5 cursor-pointer font-medium text-white hover:text-cyan-400 transition">
+                    How do I reset my password?
+                    <span class="transition-transform group-open:rotate-180"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></span>
+                </summary>
+                <div class="px-5 pb-5 text-sm text-slate-300 leading-relaxed border-t border-slate-700/50 pt-4">
+                    Currently, there is no UI for password resets for security reasons. Please contact the database administrator to manually reset credentials.
+                </div>
+            </details>
+
+        </div>
+    </div>
+
+    <div class="mt-16 p-8 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 relative overflow-hidden text-center shadow-2xl">
+        <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+        <div class="relative z-10">
+            <h2 class="text-3xl font-extrabold text-white mb-2">Want to purchase this application?</h2>
+            <p class="text-violet-100 text-lg mb-6">Get the full source code and rights for your institution.</p>
+            <div class="inline-flex items-center gap-3 bg-white/10 px-6 py-3 rounded-xl backdrop-blur-md border border-white/20">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                <a href="mailto:arhanakhtar.in@gmail.com" class="text-white font-bold tracking-wide hover:text-white/80 transition">arhanakhtar.in@gmail.com</a>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

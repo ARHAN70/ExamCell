@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-8">
+    
+    <div class="flex items-center gap-2 text-sm text-gray-500 mb-6">
+        <a href="{{ url_for('attendance_dashboard') }}" class="hover:text-white">Dashboard</a>
+        <span>/</span>
+        <span class="text-blue-400 font-bold">{{ program.name }}</span>
+    </div>
+
+    <h1 class="text-3xl font-extrabold text-white mb-8">Exam <span class="text-emerald-400">Subjects</span></h1>
+
+    {% if not exams %}
+        <div class="text-center py-20 bg-gray-900/50 rounded-3xl border border-gray-800">
+            <p class="text-gray-500 text-lg">No exams conducted for this program yet.</p>
+        </div>
+    {% else %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for exam in exams %}
+            <a href="{{ url_for('attendance_exam_list', program_id=program.id, code=exam.subject_code, date=exam.exam_date) }}" class="relative bg-gray-800 border border-gray-700 rounded-2xl p-6 hover:bg-gray-750 transition hover:border-emerald-500/50 group overflow-hidden">
+                
+                <div class="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-bl-full -mr-4 -mt-4 transition group-hover:bg-emerald-500/20"></div>
+
+                <div class="relative z-10">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="w-12 h-12 bg-gray-700 rounded-xl flex items-center justify-center text-2xl">📚</div>
+                        <span class="bg-gray-900 text-gray-300 text-xs font-mono px-2 py-1 rounded border border-gray-700">{{ exam.subject_code }}</span>
+                    </div>
+                    
+                    <h3 class="text-xl font-bold text-white mb-1 group-hover:text-emerald-400 transition">{{ exam.subject_name }}</h3>
+                    <p class="text-gray-400 text-sm mb-6 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        {{ exam.exam_date }}
+                    </p>
+
+                    <div class="flex items-center justify-between pt-4 border-t border-gray-700">
+                        <div class="text-xs text-gray-500">Present</div>
+                        <div class="text-lg font-bold text-white">{{ exam.present_count }} Students</div>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

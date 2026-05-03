@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="text-center">
+    <h1 class="text-4xl font-bold mb-2">Exam Dashboard</h1>
+    <p class="text-gray-400 mb-8">Monitor live exam status and allocation</p>
+
+    <div class="glass-panel p-4 rounded-xl inline-block mb-8">
+        <label class="text-gray-400 mr-2">Select Room:</label>
+        <select class="bg-gray-800 text-white border border-gray-600 rounded px-3 py-1">
+            {% for room in rooms %}
+            <option value="{{ room.id }}">{{ room.block }} - Floor {{ room.floor }} - Room {{ room.room_no }}</option>
+            {% endfor %}
+        </select>
+        <button class="ml-4 bg-primary px-4 py-1 rounded hover:bg-indigo-500 transition">Load Grid</button>
+    </div>
+
+    <div class="glass-panel p-8 rounded-3xl shadow-2xl relative min-h-[400px]">
+        <div id="classroom" class="grid grid-cols-4 gap-4 justify-center mt-4">
+            <div class="text-gray-500 col-span-4 py-10">Select a room to view layout</div>
+        </div>
+    </div>
+</div>
+{% endblock %}

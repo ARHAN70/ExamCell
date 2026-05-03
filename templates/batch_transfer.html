@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto glass-panel p-4 sm:p-8 rounded-3xl">
+    <h2 class="text-2xl font-bold text-white mb-2">Batch Transfer</h2>
+    <p class="text-sm text-gray-400 mb-8">Promote students to the next semester (e.g. Sem 1 → Sem 2).</p>
+
+    <!-- Selection Grid: Stacked on mobile, 3-cols on desktop -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div>
+            <label class="text-xs text-gray-500 font-bold uppercase mb-1 block">Program</label>
+            <select id="progSelect" class="w-full bg-gray-900 border border-gray-600 rounded-xl p-3 text-white outline-none focus:border-blue-500 transition-colors">
+                {% for p in programs %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="text-xs text-gray-500 font-bold uppercase mb-1 block">Current Semester</label>
+            <select id="semSelect" class="w-full bg-gray-900 border border-gray-600 rounded-xl p-3 text-white outline-none focus:border-blue-500 transition-colors">
+                {% for i in range(1, 9) %}<option value="{{ i }}">Semester {{ i }}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="flex items-end">
+            <button onclick="loadBatch()" class="w-full py-3 bg-blue-600 rounded-xl font-bold text-white hover:bg-blue-500 transition-all active:scale-95 shadow-lg shadow-blue-900/20">
+                Fetch Students
+            </button>
+        </div>
+    </div>
+
+    <!-- Student List Container -->
+    <div class="border border-gray-700 rounded-2xl bg-gray-800/30 overflow-hidden mb-6">
+        <!-- Header: Hidden on very small screens or adjusted -->
+        <div class="hidden sm:grid grid-cols-12 gap-4 p-4 bg-gray-800 border-b border-gray-700 text-xs font-bold text-gray-400 uppercase">
+            <div class="col-span-1"><input type="checkbox" onchange="toggleAll(this)" class="w-4 h-4 rounded"></div>
+            <div class="col-span-5">Student Details</div>
+            <div class="col-span-4">Roll No</div>
+            <div class="col-span-2 text-center">Section</div>
+        </div>
+        
+        <!-- Mobile Header (Visible only on mobile) -->
+        <div class="sm:hidden p-4 bg-gray-800 border-b border-gray-700 flex justify-between items-center">
+            <span class="text-xs font-bold text-gray-400 uppercase">Select All</span>
+            <input type="checkbox" onchange="toggleAll(this)" class="w-5 h-5 rounded">
+        </div>
+
+        <div id="batchList" class="max-h-96 overflow-y-auto custom-scrollbar">
+            <div class="text-center py-10 text-gray-500 italic">Select options and click Fetch</div>
+        </div>
+    </div>
+
+    <!-- Bottom Action Bar: Responsive flex -->
+    <div class="flex flex-col sm:flex-row justify-end gap-4 items-center bg-gray-900/40 p-4 rounded-2xl border border-gray-800">
+        <div class="flex items-center gap-3">
+            <span class="text-gray-400 text-xs font-bold uppercase">To:</span>
+            <select id="targetSem" class="bg-gray-800 border border-emerald-500/50 rounded-lg px-4 py-2 text-emerald-400 font-bold outline-none">
+                {% for i in range(2, 10) %}<option value="{{ i }}">Semester {{ i }}</option>{% endfor %}
+            </select>
+        </div>
+        <button onclick="executeTransfer()" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-emerald-900/20 transition-all active:scale-95">
+            Promote Selected
+        </button>
+    </div>
+</div>
+
+<script>
+    async function loadBatch() {
+        const pid = document.getElementById('progSelect').value;
+        const sem = document.getElementById('semSelect').value;
+        const list = document.getElementById('batchList');
+        
+        list.innerHTML = '<div class="text-center py-10 text-gray-500 animate-pulse">Searching database...</div>';
+        
+        try {
+            const res = await fetch(`/api/get_batch_students?program_id=${pid}&semester=${sem}`);
+            const data = await res.json();
+            
+            list.innerHTML = '';
+            if(data.length === 0) { 
+                list.innerHTML = '<div class="text-center py-10 text-gray-500">No students found in this semester.</div>'; 
+                return; 
+            }
+
+            data.forEach(s => {
+                list.innerHTML += `
+                    <div class="flex flex-col sm:grid sm:grid-cols-12 gap-2 sm:gap-4 p-4 hover:bg-gray-700/30 transition-colors border-b border-gray-700/50 relative">
+                        <div class="absolute top-4 right-4 sm:static sm:col-span-1">
+                            <input type="checkbox" class="stu-check w-5 h-5 sm:w-4 sm:h-4 rounded cursor-pointer" value="${s.id}">
+                        </div>
+                        <div class="sm:col-span-5 flex flex-col">
+                            <span class="font-bold text-white text-base sm:text-sm">${s.name}</span>
+                            <span class="sm:hidden text-xs text-gray-500 font-mono">${s.roll}</span>
+                        </div>
+                        <div class="hidden sm:block sm:col-span-4 text-gray-300 font-mono text-sm">${s.roll}</div>
+                        <div class="sm:col-span-2 flex sm:justify-center italic">
+                            <span class="bg-gray-700/50 text-gray-300 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                                Sec ${s.section ? s.section : 'N/A'}
+                            </span>
+                        </div>
+                    </div>`;
+            });
+            
+            document.getElementById('targetSem').value = parseInt(sem) + 1;
+        } catch (e) {
+            list.innerHTML = '<div class="text-center py-10 text-red-400">Error loading data.</div>';
+        }
+    }
+
+    function toggleAll(source) {
+        document.querySelectorAll('.stu-check').forEach(c => c.checked = source.checked);
+    }
+
+    async function executeTransfer() {
+        const ids = Array.from(document.querySelectorAll('.stu-check:checked')).map(c => c.value);
+        const target = document.getElementById('targetSem').value;
+        
+        if(ids.length === 0) return alert("Please select at least one student.");
+        
+        if(confirm(`Are you sure? This will promote ${ids.length} students to Semester ${target}.`)) {
+            const res = await fetch('/batch_transfer', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ student_ids: ids, target_sem: target })
+            });
+            
+            if(res.ok) {
+                alert("Batch Promotion Successful!");
+                loadBatch();
+            } else {
+                alert("Transfer failed. Please try again.");
+            }
+        }
+    }
+</script>
+
+<style>
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 10px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+</style>
+{% endblock %}

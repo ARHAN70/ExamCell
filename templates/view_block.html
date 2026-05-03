@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    .room-name-input { background: transparent; border: 1px solid transparent; color: white; font-weight: bold; text-align: center; width: 100%; font-size: 1.25rem; border-radius: 4px; transition: all 0.2s; }
+    .room-name-input:hover { border-color: #4b5563; cursor: text; }
+    .room-name-input:focus { background: #1e293b; border-color: #3b82f6; outline: none; }
+    
+    /* Delete Room Button Style */
+    .room-delete-btn {
+        position: absolute; top: -8px; right: -8px;
+        width: 28px; height: 28px; /* Slightly larger for touch */
+        background: #ef4444; color: white;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: bold; font-size: 16px;
+        cursor: pointer; transition: all 0.2s;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3); z-index: 20;
+    }
+
+    /* Logic: Always show delete buttons on mobile, hover on desktop */
+    @media (min-width: 768px) {
+        .room-delete-btn { opacity: 0; }
+        .room-card:hover .room-delete-btn { opacity: 1; top: -10px; right: -10px; }
+    }
+    
+    .room-delete-btn:hover { background: #dc2626; transform: scale(1.1); }
+</style>
+
+<div class="max-w-5xl mx-auto px-4 pb-10">
+    <!-- Header Section -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+            <a href="/" class="text-gray-400 hover:text-white transition flex items-center gap-1 text-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                Back to Campus
+            </a>
+            <h2 class="text-2xl md:text-3xl font-bold">Block <span class="text-blue-400">{{ block.name }}</span> Manager</h2>
+        </div>
+    </div>
+
+    <!-- Add Floor Section -->
+    <div class="glass-panel p-4 md:p-6 rounded-xl mb-8 flex flex-col md:flex-row justify-between items-start md:items-center shadow-lg gap-4">
+        <div>
+            <h3 class="font-bold text-lg text-white">Structure Layout</h3>
+            <p class="text-xs text-gray-400">Add floors to organize rooms vertically.</p>
+        </div>
+        <form action="/add_floor" method="POST" class="flex w-full md:w-auto gap-2">
+            <input type="hidden" name="block_id" value="{{ block.id }}">
+            <input type="number" name="floor_num" placeholder="Floor N" class="flex-1 md:flex-none bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 w-full md:w-28 text-white focus:border-blue-500 outline-none transition" required>
+            <button class="whitespace-nowrap bg-emerald-600 px-4 md:px-6 py-2 rounded-lg font-bold hover:bg-emerald-500 transition shadow-lg shadow-emerald-500/20 text-sm">
+                + Add Floor
+            </button>
+        </form>
+    </div>
+
+    <!-- Floors List -->
+    <div class="space-y-6">
+        {% for floor in block.floors|sort(attribute='floor_num') %}
+        <div class="border border-gray-700 rounded-xl p-4 md:p-6 bg-gray-900/40 relative group transition-all hover:border-gray-600">
+            
+            <!-- Floor Label -->
+            <div class="inline-block md:absolute md:-left-3 md:top-6 bg-blue-600 text-[10px] font-bold px-2 py-1 rounded shadow-lg md:rotate-[-90deg] tracking-widest border border-blue-400 mb-4 md:mb-0">
+                FLOOR {{ floor.floor_num }}
+            </div>
+            
+            <!-- Delete Floor Button -->
+            <form action="/delete_floor/{{ floor.id }}" method="POST" onsubmit="return confirm('Delete Floor {{ floor.floor_num }}? All rooms inside will be lost.')" class="absolute top-4 right-4 md:opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <button class="flex items-center gap-2 bg-red-500/10 text-red-400 border border-red-500/30 px-3 py-1.5 rounded-lg hover:bg-red-500 hover:text-white transition text-[10px] font-bold">
+                    Delete Level
+                </button>
+            </form>
+            
+            <div class="md:ml-8 mt-2">
+                <div class="flex flex-wrap gap-4 items-start justify-center md:justify-start">
+                    {% for room in floor.rooms %}
+                    <div class="room-card w-full sm:w-36 h-28 bg-gray-800 rounded-xl border border-gray-600 hover:border-blue-400 flex flex-col items-center justify-between p-3 transition shadow-lg relative">
+                        
+                        <form action="/delete_room/{{ room.id }}" method="POST" onsubmit="return confirm('Delete Room {{ room.name }}?')">
+                            <button class="room-delete-btn">×</button>
+                        </form>
+
+                        <span class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Room No</span>
+                        <input type="text" value="{{ room.name }}" class="room-name-input" onchange="updateRoomName(this, {{ room.id }}, '{{ room.name }}')" title="Click to rename">
+                        <a href="/editor/{{ room.id }}" class="text-[10px] text-blue-400 font-bold hover:text-blue-300 hover:underline mt-1">Edit Layout &rarr;</a>
+                    </div>
+                    {% endfor %}
+
+                    <!-- Add Room Card -->
+                    <form action="/add_room" method="POST" class="w-full sm:w-36 h-28 border-2 border-dashed border-gray-700 rounded-xl flex flex-col items-center justify-center gap-2 hover:border-emerald-500/50 hover:bg-gray-800/30 transition group/add">
+                        <input type="hidden" name="block_id" value="{{ block.id }}">
+                        <input type="hidden" name="floor_id" value="{{ floor.id }}">
+                        <input type="text" name="name" placeholder="New Room" class="bg-transparent border-b border-gray-600 text-center w-24 text-sm text-white focus:border-emerald-500 outline-none pb-1 transition-colors" required>
+                        <button class="text-[10px] bg-emerald-600/20 text-emerald-400 px-3 py-1 rounded-full font-bold group-hover/add:bg-emerald-600 group-hover/add:text-white transition-all">+ Add Room</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+    async function updateRoomName(input, roomId, oldName) {
+        const newName = input.value.trim();
+        if (newName === oldName || newName === "") { input.value = oldName; return; }
+        if (confirm(`Rename room to "${newName}"?`)) {
+            await fetch('/update_room_name', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ room_id: roomId, new_name: newName }) 
+            });
+            input.onchange = function() { updateRoomName(this, roomId, newName); };
+        } else { input.value = oldName; }
+    }
+</script>
+{% endblock %}

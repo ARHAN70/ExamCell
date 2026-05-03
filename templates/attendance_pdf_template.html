@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Attendance Report</title>
+    <style>
+        body { font-family: 'Times New Roman', serif; padding: 40px; color: #000; }
+        .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 20px; }
+        .univ-name { font-size: 24px; font-weight: bold; color: #d35400; text-transform: uppercase; }
+        .sub-title { font-size: 16px; margin-top: 5px; font-weight: bold; }
+        
+        .info-grid { display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; font-family: sans-serif; font-size: 14px; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-family: sans-serif; font-size: 12px; }
+        th, td { border: 1px solid #000; padding: 8px; text-align: left; }
+        th { background-color: #f0f0f0; text-transform: uppercase; }
+        
+        .absent-row { background-color: #ffe6e6; } /* Light Red for Absent in PDF */
+        .status-absent { color: red; font-weight: bold; }
+        .status-present { color: green; font-weight: bold; }
+
+        .footer { margin-top: 50px; display: flex; justify-content: space-between; font-weight: bold; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="univ-name">SARALA BIRLA UNIVERSITY</div>
+        <div class="sub-title">EXAM ATTENDANCE SHEET</div>
+    </div>
+
+    <div class="info-grid">
+        <div>Program: {{ program.name }}</div>
+        <div>Subject: {{ subject }} ({{ code }})</div>
+        <div>Date: {{ date }}</div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 40px;">S.No</th>
+                <th>Reg No</th>
+                <th>Roll No</th>
+                <th>Student Name</th>
+                <th>Answer Sheet No</th>
+                <th>Status</th>
+                <th>Sign</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in records %}
+            <tr class="{{ 'absent-row' if r.status == 'Absent' else '' }}">
+                <td>{{ loop.index }}</td>
+                <td>{{ r.reg_no }}</td>
+                <td>{{ r.roll_no }}</td>
+                <td>{{ r.name }}</td>
+                <td style="font-weight: bold;">{{ r.sheet_no }}</td>
+                <td class="{{ 'status-absent' if r.status == 'Absent' else 'status-present' }}">
+                    {{ r.status }}
+                </td>
+                <td></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        <div>Invigilator Signature</div>
+        <div>Controller of Examinations</div>
+    </div>
+</body>
+</html>

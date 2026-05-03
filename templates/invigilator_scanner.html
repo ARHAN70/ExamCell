@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block content %}
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+<div class="max-w-4xl mx-auto px-4 py-8">
+    
+    <div class="bg-gray-800/50 border border-gray-700 rounded-2xl p-4 mb-6 flex flex-wrap gap-4 items-center justify-between">
+        <div>
+            <h2 class="text-xl font-bold text-white">{{ details.subject_name }} <span class="text-gray-500 text-sm">({{ details.subject_code }})</span></h2>
+            <div class="text-sm text-gray-400 flex gap-4 mt-1">
+                <span>📅 {{ details.date }}</span>
+                <span>⏰ {{ details.time }}</span>
+                <span>📍 {{ details.block }} - {{ details.room }}</span>
+            </div>
+        </div>
+        <a href="{{ url_for('attendance_dashboard') }}" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white text-sm font-bold rounded-lg transition">
+            Finish & View Dashboard
+        </a>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        
+        <div>
+            <div class="bg-black/40 border border-gray-700 rounded-2xl overflow-hidden shadow-2xl relative min-h-[300px] flex items-center justify-center">
+                <div id="reader" class="w-full h-full"></div>
+                
+                <div id="camera-overlay" class="absolute inset-0 flex flex-col items-center justify-center bg-black/80 z-20">
+                    <svg class="w-12 h-12 text-gray-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    <button onclick="startScanner()" class="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-full transition shadow-lg shadow-blue-500/30">
+                        Start Camera
+                    </button>
+                    <p class="text-gray-500 text-xs mt-3">Requires Camera Permissions</p>
+                </div>
+
+                <div id="live-badge" class="hidden absolute top-4 right-4 px-3 py-1 bg-red-500/20 border border-red-500/50 text-red-400 text-xs font-bold rounded-full animate-pulse z-10">
+                    LIVE CAMERA
+                </div>
+            </div>
+            <p class="text-center text-gray-500 text-xs mt-3">Point camera at the QR code sticker on the bench.</p>
+        </div>
+
+        <div class="flex flex-col h-full">
+            
+            <input type="hidden" id="exam-meta" value='{{ details|tojson }}'>
+
+            <div id="entry-form" class="hidden bg-gray-800 border border-blue-500/30 p-5 rounded-2xl mb-6 shadow-lg shadow-blue-900/20 animate-fadeIn">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 font-bold" id="scanned-initial">A</div>
+                    <div>
+                        <h3 class="text-white font-bold text-lg leading-tight" id="scanned-name">Student Name</h3>
+                        <p class="text-sm text-emerald-400 font-mono" id="scanned-roll">Roll No</p>
+                    </div>
+                </div>
+                
+                <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Answer Sheet Number (Max 6 Digits)</label>
+                <div class="flex gap-2">
+                    
+                    <input type="text" id="sheet-no" 
+                           maxlength="6" 
+                           oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                           class="flex-1 bg-gray-900 border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-blue-500 outline-none transition font-mono text-lg tracking-widest" 
+                           placeholder="000000">
+                    
+                    <button onclick="submitAttendance()" class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg font-bold transition shadow-lg shadow-emerald-500/20">Save</button>
+                </div>
+                <input type="hidden" id="scanned-uid">
+            </div>
+
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-gray-300 font-bold text-sm uppercase tracking-wider">Present Students</h3>
+                <span class="bg-emerald-500/10 text-emerald-400 text-xs px-2 py-1 rounded font-mono" id="count-badge">0 Scanned</span>
+            </div>
+
+            <div class="flex-1 overflow-y-auto custom-scroll bg-gray-900/30 border border-gray-800 rounded-2xl p-4 space-y-3 max-h-[400px]" id="attendance-list">
+                <div class="text-center text-gray-600 text-sm py-4" id="empty-msg">No students scanned yet.</div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    let html5QrcodeScanner;
+
+    function startScanner() {
+        document.getElementById('camera-overlay').style.display = 'none';
+        document.getElementById('live-badge').classList.remove('hidden');
+        
+        html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 15, qrbox: {width: 250, height: 250} }, false);
+        html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+    }
+    
+    async function onScanSuccess(decodedText, decodedResult) {
+        html5QrcodeScanner.pause();
+        
+        try {
+            const res = await fetch('/api/get_student_details', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ uid: decodedText })
+            });
+            const data = await res.json();
+
+            if (data.status === 'success') {
+                document.getElementById('scanned-uid').value = decodedText;
+                document.getElementById('scanned-name').innerText = data.name;
+                document.getElementById('scanned-roll').innerText = data.roll;
+                document.getElementById('scanned-initial').innerText = data.name.charAt(0).toUpperCase();
+                
+                document.getElementById('entry-form').classList.remove('hidden');
+                
+                const sheetInput = document.getElementById('sheet-no');
+                sheetInput.value = '';
+                sheetInput.focus();
+            } else {
+                alert("Student not found!");
+                html5QrcodeScanner.resume();
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Connection Error");
+            html5QrcodeScanner.resume();
+        }
+    }
+
+    function onScanFailure(error) {
+        // Keep scanning
+    }
+
+    async function submitAttendance() {
+        const uid = document.getElementById('scanned-uid').value;
+        const sheetNo = document.getElementById('sheet-no').value;
+        const meta = JSON.parse(document.getElementById('exam-meta').value);
+
+        if(!sheetNo || sheetNo.length < 1) {
+            alert("Please enter Answer Sheet Number");
+            document.getElementById('sheet-no').focus();
+            return; 
+        }
+
+        try {
+            const res = await fetch('/api/mark_attendance', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    uid: uid,
+                    sheet_no: sheetNo,
+                    ...meta
+                })
+            });
+            const data = await res.json();
+
+            if(data.status === 'success') {
+                addCard(data.student.name, data.student.roll, sheetNo);
+                document.getElementById('entry-form').classList.add('hidden');
+                html5QrcodeScanner.resume();
+            } else {
+                // DUPLICATE OR ERROR ALERT
+                alert(data.message);
+                // Keep form open to fix the number
+            }
+
+        } catch(e) {
+            alert("Error saving.");
+        }
+    }
+
+    function addCard(name, roll, sheet) {
+        document.getElementById('empty-msg').style.display = 'none';
+        const list = document.getElementById('attendance-list');
+        const badge = document.getElementById('count-badge');
+        
+        const html = `
+            <div class="bg-gray-800 border border-gray-700 p-3 rounded-xl flex justify-between items-center animate-fadeIn">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 font-bold text-xs">${name[0]}</div>
+                    <div>
+                        <p class="text-white text-sm font-bold">${name}</p>
+                        <p class="text-gray-500 text-xs">${roll}</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-xs text-gray-400 uppercase">Sheet No</p>
+                    <p class="text-blue-400 font-mono font-bold text-sm">${sheet}</p>
+                </div>
+            </div>
+        `;
+        list.insertAdjacentHTML('afterbegin', html);
+        badge.innerText = `${document.querySelectorAll('#attendance-list > div').length - 1} Scanned`;
+    }
+</script>
+{% endblock %}

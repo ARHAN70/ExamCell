@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Print Stickers - {{ timetable.title }}</title>
+    <style>
+        body { margin: 0; padding: 0; font-family: sans-serif; background: #eee; }
+        .page-container { background: white; width: 210mm; min-height: 297mm; margin: 20px auto; padding: 15mm; box-sizing: border-box; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .sticker-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 15px; }
+        .sticker { border: 2px dashed #ccc; height: 100px; padding: 10px; display: flex; justify-content: space-between; align-items: center; page-break-inside: avoid; }
+        .info { flex: 1; }
+        .roll { font-size: 17px; font-weight: 900; }
+        .name { font-size: 12px;font-family:arial;  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;}
+        
+        /* Updated Meta Style: Bold Registration Number */
+        .meta { font-size: 14px; font-weight: bold; color: #000; margin-top: 5px; font-family: monospace; }
+        
+        /* Updated QR Style: 65x65 with Border */
+        .qr { width: 65px; height: 65px; border: 2px solid #000; padding: 2px; border-radius: 4px; }
+        
+        @media print {
+            body { background: white; }
+            .page-container { width: auto; height: auto; margin: 0; padding: 10mm; box-shadow: none; }
+            .sticker { border: 1px solid #eee; } 
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body onload="window.print()">
+    <div style="background: #333; color: white; padding: 10px; text-align: center;" class="no-print">
+        Printing started automatically. Ensure margins are set to 'None' or 'Minimum' in printer settings.
+    </div>
+    <div class="page-container">
+        <div class="sticker-grid">
+            {% for seat in seats %}
+            <div class="sticker">
+                <div class="info">
+                    <div class="roll">{{ seat.roll }}</div>
+                    <div class="name">{{ seat.name }}</div>
+                    <div class="meta">
+                        {{ seat.reg_no }}
+                    </div>
+                </div>
+                <img class="qr" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={{ url_for('scan_student', uid=seat.exam_uid, _external=True) }}">            </div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

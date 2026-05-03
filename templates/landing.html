@@ -1,0 +1,353 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    /* --- FULL SCREEN SLIDER STYLES --- */
+    .hero-wrapper {
+        position: relative;
+        min-height: 100vh; /* Changed from height to min-height for mobile content room */
+        width: 100vw;
+        margin-left: calc(-50vw + 50%);
+        margin-top: -80px;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .slider-container {
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        z-index: 1;
+    }
+
+    .slide {
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        opacity: 0;
+        transition: opacity 1.5s ease-in-out, transform 8s linear;
+        background-size: cover;
+        background-position: center;
+        transform: scale(1);
+    }
+    .slide.active {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+    
+    .slide::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: linear-gradient(to bottom, rgba(15,23,42,0.6) 0%, rgba(15,23,42,0.9) 100%);
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 10;
+        text-align: center;
+        width: 95%;
+        max-width: 900px;
+        padding: 120px 0 60px; /* Padding for mobile safety */
+    }
+
+    .hero-glass {
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 2rem 1.5rem;
+        border-radius: 24px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Desktop Padding */
+    @media (min-width: 768px) {
+        .hero-glass { padding: 4rem 3rem; }
+        .hero-content { padding: 0; }
+    }
+
+    .text-gradient {
+        background: linear-gradient(to right, #60a5fa, #34d399);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .btn-hero {
+        padding: 0.8rem 2rem;
+        font-weight: 700;
+        border-radius: 9999px;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-size: 0.85rem;
+        display: inline-block;
+    }
+
+    @media (min-width: 640px) {
+        .btn-hero { padding: 1rem 2.5rem; font-size: 0.9rem; }
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #2563eb 0%, #10b981 100%);
+        color: white !important;
+        box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.4);
+    }
+
+    .btn-secondary {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white !important;
+        backdrop-filter: blur(4px);
+    }
+
+    .glass-card {
+        background: rgba(30, 41, 59, 0.4);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 20px;
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+
+    .custom-input {
+        background: rgba(15, 23, 42, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: white;
+        transition: 0.3s;
+    }
+
+    /* --- LOGIN POPUP STYLES --- */
+    .login-modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(8px);
+        z-index: 1000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.5s ease-out;
+        padding: 20px;
+    }
+
+    .login-modal-content {
+        background: rgba(30, 41, 59, 0.95);
+        border: 1px solid rgba(99, 102, 241, 0.3);
+        box-shadow: 0 0 50px rgba(99, 102, 241, 0.2);
+        transform: scale(0.9) translateY(20px);
+        transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    .login-modal-overlay.show { opacity: 1; visibility: visible; }
+    .login-modal-overlay.show .login-modal-content { transform: scale(1) translateY(0); }
+</style>
+
+<div class="hero-wrapper">
+    <div class="slider-container">
+        <div class="slide active" style="background-image: url('https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80&w=2000');"></div>
+        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&q=80&w=2000');"></div>
+        <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&q=80&w=2000');"></div>
+    </div>
+
+    <div class="hero-content">
+        <div class="hero-glass animate-fade-in-up">
+            <div class="mb-4 sm:mb-6">
+                <span class="px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-[10px] sm:text-xs font-bold tracking-widest border border-blue-500/30 uppercase">
+                    Exam Management System v2.1
+                </span>
+            </div>
+            
+            <h1 class="text-3xl sm:text-5xl md:text-7xl font-extrabold text-white mb-4 sm:mb-6 leading-tight tracking-tight">
+                Streamline Your <br> 
+                <span class="text-gradient">Examination Cell</span>
+            </h1>
+            
+            <p class="text-slate-300 text-sm sm:text-lg md:text-xl mb-8 sm:mb-10 max-w-2xl mx-auto leading-relaxed font-light">
+                Automate seating allocation, generate QR codes, and manage student data with our AI-powered university platform.
+            </p>
+            
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                {% if not session.get('user') %}
+                    <a href="{{ url_for('signup') }}" class="btn-hero btn-primary">Get Started</a>
+                    <a href="{{ url_for('login') }}" class="btn-hero btn-secondary">Login Account</a>
+                {% else %}
+                    <a href="{{ url_for('campus') }}" class="btn-hero btn-primary">Go to Dashboard</a>
+                {% endif %}
+            </div>
+            
+            <div class="mt-8 flex justify-center items-center gap-2 text-xs sm:text-sm text-slate-400">
+                <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span>Trusted by 50+ Faculties</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section id="features" class="py-16 sm:py-24 relative container mx-auto px-6">
+    <div class="text-center mb-12 sm:mb-16">
+        <h2 class="text-2xl sm:text-4xl font-bold text-white">Why Choose <span class="text-emerald-400">ExamCell AI?</span></h2>
+        <p class="text-slate-400 mt-4 max-w-2xl mx-auto text-sm sm:text-base">A complete suite of tools designed specifically for university examination controllers to reduce workload and errors.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+        <!-- Feature 1 -->
+        <div class="glass-card p-6 sm:p-8 flex flex-col gap-4">
+            <div class="w-12 h-12 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+            </div>
+            <h3 class="text-lg sm:text-xl font-bold text-white">Campus Management</h3>
+            <p class="text-slate-400 text-sm leading-relaxed">Digitally map your entire university infrastructure. Define blocks, floors, rooms, and bench capacities with a drag-and-drop editor.</p>
+        </div>
+        
+        <!-- Feature 2 -->
+        <div class="glass-card p-6 sm:p-8 flex flex-col gap-4">
+            <div class="w-12 h-12 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+            </div>
+            <h3 class="text-lg sm:text-xl font-bold text-white">Bulk Data Handling</h3>
+            <p class="text-slate-400 text-sm leading-relaxed">Import thousands of student records via Excel/CSV. Automatically categorize by program, semester, and eligibility criteria.</p>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="glass-card p-6 sm:p-8 flex flex-col gap-4">
+            <div class="w-12 h-12 rounded-lg bg-purple-500/20 flex items-center justify-center text-purple-400">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            </div>
+            <h3 class="text-lg sm:text-xl font-bold text-white">Algorithm Allocation</h3>
+            <p class="text-slate-400 text-sm leading-relaxed">Our smart algorithm allocates seats ensuring no two students from the same department sit adjacent, reducing malpractice.</p>
+        </div>
+        
+        <!-- Feature 4 -->
+        <div class="glass-card p-6 sm:p-8 flex flex-col gap-4">
+            <div class="w-12 h-12 rounded-lg bg-pink-500/20 flex items-center justify-center text-pink-400">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01"></path></svg>
+            </div>
+            <h3 class="text-lg sm:text-xl font-bold text-white">QR Code Stickers</h3>
+            <p class="text-slate-400 text-sm leading-relaxed">Generate print-ready desk stickers with unique QR codes for every allocated seat, making exam hall management effortless.</p>
+        </div>
+
+        <!-- Feature 5 -->
+        <div class="glass-card p-6 sm:p-8 flex flex-col gap-4">
+            <div class="w-12 h-12 rounded-lg bg-yellow-500/20 flex items-center justify-center text-yellow-400">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            </div>
+            <h3 class="text-lg sm:text-xl font-bold text-white">PDF Reports</h3>
+            <p class="text-slate-400 text-sm leading-relaxed">Download comprehensive reports for notice boards, faculty attendance sheets, and records in one click.</p>
+        </div>
+
+        <!-- Feature 6 -->
+        <div class="glass-card p-6 sm:p-8 flex flex-col gap-4">
+            <div class="w-12 h-12 rounded-lg bg-cyan-500/20 flex items-center justify-center text-cyan-400">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+            </div>
+            <h3 class="text-lg sm:text-xl font-bold text-white">Secure Access</h3>
+            <p class="text-slate-400 text-sm leading-relaxed">Role-based authenticated access ensures that only authorized cell members can modify sensitive data.</p>
+        </div>
+    </div>
+</section>
+
+<section class="py-16 sm:py-20 border-t border-slate-800">
+    <div class="container mx-auto px-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 sm:gap-16 items-start">
+            <div>
+                <h2 class="text-2xl sm:text-3xl font-bold text-white mb-6 sm:mb-8 text-center lg:text-left">What Faculties Say</h2>
+                <div class="space-y-6">
+                    <div class="glass-card p-6">
+                        <p class="text-slate-300 italic mb-4 text-sm sm:text-base">"ExamCell AI cut our seating arrangement time from 3 days to 30 minutes. The random allocation is flawless."</p>
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-[10px] font-bold">BP</div>
+                            <div>
+                                <h4 class="text-white font-bold text-xs sm:text-sm">Mr. Bikram Pratap Singh</h4>
+                                <p class="text-slate-500 text-[10px] sm:text-xs">Associate Professor, SBU</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="glass-card p-6">
+                        <p class="text-slate-300 italic mb-4 text-sm sm:text-base">"The visual room editor is a game changer. We can instantly update capacities if a room is under maintenance."</p>
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-[10px] font-bold">SD</div>
+                            <div>
+                                <h4 class="text-white font-bold text-xs sm:text-sm">Dr. Santosh kr. Das</h4>
+                                <p class="text-slate-500 text-[10px] sm:text-xs">Assistant Professor</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card p-6 sm:p-8">
+                <h2 class="text-xl sm:text-2xl font-bold text-white mb-6">Contact Support</h2>
+                <form action="https://formspree.io/f/mlgavkzb" method="POST" class="space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-slate-400 text-[10px] font-bold mb-2 uppercase">Name</label>
+                            <input type="text" name="name" class="custom-input w-full p-3 rounded-lg text-sm" placeholder="Your Name" required>
+                        </div>
+                        <div>
+                            <label class="block text-slate-400 text-[10px] font-bold mb-2 uppercase">Email</label>
+                            <input type="email" name="email" class="custom-input w-full p-3 rounded-lg text-sm" placeholder="admin@sbu.ac.in" required>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 text-[10px] font-bold mb-2 uppercase">Message</label>
+                        <textarea name="message" class="custom-input w-full p-3 rounded-lg h-24 text-sm" placeholder="How can we help?" required></textarea>
+                    </div>
+                    <button type="submit" class="w-full px-8 py-3 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-bold transition text-sm">
+                        Send Message
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Login Popup remains largely the same but with w-full max-w-md and p-6 for small screens -->
+<div id="loginPopup" class="login-modal-overlay">
+    <div class="login-modal-content p-6 sm:p-8 rounded-2xl w-full max-w-md relative text-center">
+        <button onclick="closePopup()" class="absolute top-4 right-4 text-slate-400 hover:text-white transition">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+        <div class="w-16 h-16 rounded-full bg-blue-500/20 flex items-center justify-center mx-auto mb-6">
+            <svg class="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
+        </div>
+        <h3 class="text-xl sm:text-2xl font-bold text-white mb-2">Welcome Back!</h3>
+        <p class="text-slate-400 text-xs sm:text-sm mb-8">Access your dashboard to manage exams, students, and seating allocations.</p>
+        <div class="space-y-3">
+            <a href="{{ url_for('login') }}" class="block w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-sm shadow-lg hover:scale-105 transition transform">Login Now</a>
+            <a href="{{ url_for('signup') }}" class="block w-full py-3 rounded-xl bg-slate-700 text-slate-300 font-bold text-sm hover:bg-slate-600 transition">Create Account</a>
+        </div>
+        <p class="text-[10px] text-slate-500 mt-6">Secure access for University Faculty only.</p>
+    </div>
+</div>
+
+<script>
+    // Hero Slider
+    const slides = document.querySelectorAll('.slide');
+    let currentSlide = 0;
+    function nextSlide() {
+        slides[currentSlide].classList.remove('active');
+        currentSlide = (currentSlide + 1) % slides.length;
+        slides[currentSlide].classList.add('active');
+    }
+    setInterval(nextSlide, 5000);
+
+    // Popup Logic
+    window.addEventListener('load', function() {
+        {% if not session.get('user') %}
+            setTimeout(function() {
+                const popup = document.getElementById('loginPopup');
+                if(popup) popup.classList.add('show');
+            }, 7000); 
+        {% endif %}
+    });
+    function closePopup() {
+        document.getElementById('loginPopup').classList.remove('show');
+    }
+</script>
+{% endblock %}

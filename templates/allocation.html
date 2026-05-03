@@ -1,0 +1,567 @@
+{% extends "base.html" %}
+
+{% block content %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+<style>
+    /* --- SCROLLBAR --- */
+    .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+    .custom-scroll::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+    /* --- CLASSROOM WRAPPER --- */
+    .classroom-wrapper {
+        background: rgba(30, 41, 59, 0.4); 
+        border: 1px solid rgba(148, 163, 184, 0.1);
+        border-radius: 16px;
+        padding: 16px; 
+        margin-bottom: 40px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        position: relative;
+        animation: fadeIn 0.5s ease-out;
+        backdrop-filter: blur(10px);
+        overflow-x: auto; /* Allows horizontal scrolling on mobile */
+    }
+    
+    @media (min-width: 1024px) {
+        .classroom-wrapper { padding: 24px; }
+    }
+
+    /* --- BENCH LAYOUT --- */
+    .benches-grid { 
+        display: grid; 
+        gap: 16px; 
+        padding: 10px 0; 
+        min-width: max-content; /* CRITICAL: Prevents squishing on mobile */
+    }
+    
+    .bench-unit {
+        background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 8px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.2); display: flex; flex-direction: column;
+        align-items: center; position: relative; transition: transform 0.2s;
+        min-width: 260px; /* Forces readability width */
+    }
+    .bench-unit:hover { transform: translateY(-2px); border-color: #64748b; }
+    .bench-label { font-size: 9px; color: #64748b; font-weight: 800; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
+    .seats-row { display: flex; gap: 8px; width: 100%; }
+
+    .seat-box {
+        flex: 1; background: #0f172a; border-radius: 8px; min-height: 85px; 
+        display: flex; flex-direction: column; justify-content: center; padding: 10px; padding-right: 42px;
+        overflow: hidden; border: 1px solid rgba(255,255,255,0.05); position: relative;
+    }
+    .seat-occupied-blue {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(30, 58, 138, 0.3));
+        border: 1px solid rgba(59, 130, 246, 0.4); box-shadow: 0 0 10px rgba(59, 130, 246, 0.1);
+    }
+    .seat-occupied-purple {
+        background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(88, 28, 135, 0.3));
+        border: 1px solid rgba(168, 85, 247, 0.4); box-shadow: 0 0 10px rgba(168, 85, 247, 0.1);
+    }
+
+    .stu-roll { font-size: 14px; font-weight: 900; color: #fff; letter-spacing: 0.5px; margin-bottom: 2px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+    .stu-name { font-size: 10px; font-weight: 500; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 70%; }
+    .stu-reg { font-size: 9px; color: #4ade80; font-family: monospace; font-weight: bold; margin-top: 4px; opacity: 0.9; }
+    .qr-code { position: absolute; bottom: 6px; right: 6px; width: 36px; height: 36px; border-radius: 4px; border: 2px solid white; background: white; padding: 1px; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: 0; } }
+
+    /* --- IOS CHECKBOX STYLES --- */
+    .ios-checkbox {
+        --checkbox-size: 24px;
+        --checkbox-color: #10b981;
+        --checkbox-bg: #0f172a;
+        --checkbox-border: #475569;
+        position: relative; display: inline-block; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent;
+    }
+    .ios-checkbox input { display: none; }
+    .checkbox-wrapper { position: relative; width: var(--checkbox-size); height: var(--checkbox-size); border-radius: 8px; transition: transform 0.2s ease; }
+    .checkbox-bg { position: absolute; inset: 0; border-radius: 8px; border: 2px solid var(--checkbox-border); background: var(--checkbox-bg); transition: all 0.2s ease; }
+    .checkbox-icon { position: absolute; inset: 0; margin: auto; width: 70%; height: 70%; color: white; transform: scale(0); transition: all 0.2s ease; }
+    .check-path { stroke-dasharray: 40; stroke-dashoffset: 40; transition: stroke-dashoffset 0.3s ease 0.1s; }
+    .ios-checkbox input:checked + .checkbox-wrapper .checkbox-bg { background: var(--checkbox-color); border-color: var(--checkbox-color); box-shadow: 0 0 10px rgba(16, 185, 129, 0.4); }
+    .ios-checkbox input:checked + .checkbox-wrapper .checkbox-icon { transform: scale(1); }
+    .ios-checkbox input:checked + .checkbox-wrapper .check-path { stroke-dashoffset: 0; }
+    .ios-checkbox:hover .checkbox-wrapper { transform: scale(1.05); }
+    .ios-checkbox:active .checkbox-wrapper { transform: scale(0.95); }
+    @keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+    .ios-checkbox input:checked + .checkbox-wrapper { animation: bounce 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+
+    /* --- ANIMATED GENERATE BUTTON --- */
+    .btn-wrapper { position: relative; display: flex; justify-content: center; transform: scale(0.9); width: 100%; margin-top: 4px; }
+    @media (min-width: 640px) { .btn-wrapper { width: auto; display: inline-block; margin-top: 0; } }
+    @media (min-width: 1024px) { .btn-wrapper { transform: scale(1); } }
+
+    .btn {
+        --border-radius: 24px; --padding: 4px; --transition: 0.4s; --button-color: #101010; --highlight-color-hue: 210deg;
+        user-select: none; display: flex; justify-content: center; align-items: center; padding: 0.6em 1.5em;
+        font-family: "Inter", sans-serif; font-size: 1em; font-weight: 400; background-color: var(--button-color);
+        box-shadow: inset 0px 1px 1px rgba(255, 255, 255, 0.2), inset 0px 2px 2px rgba(255, 255, 255, 0.15), inset 0px 4px 4px rgba(255, 255, 255, 0.1), inset 0px 8px 8px rgba(255, 255, 255, 0.05), inset 0px 16px 16px rgba(255, 255, 255, 0.05), 0px -1px 1px rgba(0, 0, 0, 0.02), 0px -2px 2px rgba(0, 0, 0, 0.03), 0px -4px 4px rgba(0, 0, 0, 0.05), 0px -8px 8px rgba(0, 0, 0, 0.06), 0px -16px 16px rgba(0, 0, 0, 0.08);
+        border: solid 1px #fff2; border-radius: var(--border-radius); cursor: pointer;
+        transition: box-shadow var(--transition), border var(--transition), background-color var(--transition);
+        color: white; 
+    }
+    .btn::before {
+        content: ""; position: absolute; top: calc(0px - var(--padding)); left: calc(0px - var(--padding));
+        width: calc(100% + var(--padding) * 2); height: calc(100% + var(--padding) * 2);
+        border-radius: calc(var(--border-radius) + var(--padding)); pointer-events: none;
+        background-image: linear-gradient(0deg, #0004, #000a); z-index: -1;
+        transition: box-shadow var(--transition), filter var(--transition);
+        box-shadow: 0 -8px 8px -6px #0000 inset, 0 -16px 16px -8px #00000000 inset, 1px 1px 1px #fff2, 2px 2px 2px #fff1, -1px -1px 1px #0002, -2px -2px 2px #0001;
+    }
+    .btn::after {
+        content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        border-radius: inherit; pointer-events: none;
+        background-image: linear-gradient(0deg, #fff, hsl(var(--highlight-color-hue), 100%, 70%), hsla(var(--highlight-color-hue), 100%, 70%, 50%), 8%, transparent);
+        background-position: 0 0; opacity: 0; transition: opacity var(--transition), filter var(--transition);
+    }
+    .btn-letter { position: relative; display: inline-block; color: #fff5; animation: letter-anim 2s ease-in-out infinite; transition: color var(--transition), text-shadow var(--transition), opacity var(--transition); }
+    @keyframes letter-anim { 50% { text-shadow: 0 0 3px #fff8; color: #fff; } }
+    
+    /* Removed flex-grow: 1 from here to stop the icon from pushing the text away */
+    .btn-svg { height: 24px; margin-right: 0.5rem; fill: #e8e8e8; animation: flicker 2s linear infinite; animation-delay: 0.5s; filter: drop-shadow(0 0 2px #fff9); transition: fill var(--transition), filter var(--transition), opacity var(--transition); }
+    
+    @keyframes flicker { 50% { opacity: 0.3; } }
+    .txt-wrapper { position: relative; display: flex; align-items: center; min-width: 6.4em; }
+    .txt-1, .txt-2 { position: absolute; word-spacing: -1em; }
+    .txt-1 { animation: appear-anim 1s ease-in-out forwards; }
+    .txt-2 { opacity: 0; }
+    @keyframes appear-anim { 0% { opacity: 0; } 100% { opacity: 1; } }
+    .btn:focus .txt-1 { animation: opacity-anim 0.3s ease-in-out forwards; animation-delay: 1s; }
+    .btn:focus .txt-2 { animation: opacity-anim 0.3s ease-in-out reverse forwards; animation-delay: 1s; }
+    @keyframes opacity-anim { 0% { opacity: 1; } 100% { opacity: 0; } }
+    .btn:focus .btn-letter { animation: focused-letter-anim 1s ease-in-out forwards, letter-anim 1.2s ease-in-out infinite; animation-delay: 0s, 1s; }
+    @keyframes focused-letter-anim { 0%, 100% { filter: blur(0px); } 50% { transform: scale(2); filter: blur(10px) brightness(150%) drop-shadow(-36px 12px 12px hsl(var(--highlight-color-hue), 100%, 70%)); } }
+    .btn:focus .btn-svg { animation-duration: 1.2s; animation-delay: 0.2s; }
+    .btn:focus::before { box-shadow: 0 -8px 12px -6px #fff3 inset, 0 -16px 16px -8px hsla(var(--highlight-color-hue), 100%, 70%, 20%) inset, 1px 1px 1px #fff3, 2px 2px 2px #fff1, -1px -1px 1px #0002, -2px -2px 2px #0001; }
+    .btn:focus::after { opacity: 0.6; mask-image: linear-gradient(0deg, #fff, transparent); filter: brightness(100%); }
+    .btn-letter:nth-child(1), .btn:focus .btn-letter:nth-child(1) { animation-delay: 0s; }
+
+</style>
+
+<div class="max-w-[98%] lg:max-w-[95%] mx-auto h-auto lg:h-[88vh] flex flex-col gap-6 header-container pb-10 lg:pb-0">
+    
+    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-end pb-4 border-b border-gray-800 flex-shrink-0 gap-4">
+        
+        <div class="w-full lg:w-auto">
+            <h1 class="text-2xl sm:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400 leading-tight">Generate Timetable</h1>
+            <p class="text-xs text-gray-500 mt-1">Generate a temporary plan. Publish to save and print reports.</p>
+        </div>
+
+        <div class="flex flex-col sm:flex-row flex-wrap justify-start sm:justify-end gap-3 items-center w-full lg:w-auto">
+            
+            <a href="{{ url_for('exam_timetable_index') }}" class="text-gray-400 hover:text-white font-bold text-sm flex items-center gap-2 transition order-1 w-full sm:w-auto justify-center sm:justify-start">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                <span>Saved Exams</span>
+            </a>
+
+            <div class="h-8 w-px bg-gray-700 mx-2 hidden sm:block order-2"></div>
+
+            <button onclick="downloadReport()" class="order-3 relative inline-flex items-center justify-center p-0.5 overflow-hidden text-sm font-medium rounded-lg group bg-gradient-to-br from-purple-600 to-blue-500 group-hover:from-purple-600 group-hover:to-blue-500 hover:text-white text-white focus:ring-4 focus:outline-none focus:ring-blue-800 w-full sm:w-auto">
+                <span class="relative px-4 py-2.5 sm:py-2 transition-all ease-in duration-75 bg-gray-900 rounded-md group-hover:bg-opacity-0 flex items-center justify-center gap-2 w-full">
+                    <svg class="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-5.367 3 3 0 00-5.367 5.367zm0 10.632a3 3 0 105.368 5.368 3 3 0 00-5.368-5.368z"></path></svg>
+                    <span>Share / Download Report</span>
+                </span>
+            </button>
+
+            <div class="h-8 w-px bg-gray-700 mx-2 hidden sm:block order-4"></div>
+
+            <div class="text-right order-5 hidden sm:block">
+                <div class="text-xs text-gray-500 uppercase font-bold">Allocated</div>
+                <div class="text-2xl font-bold text-emerald-400 font-mono leading-none" id="stats-counter">0/0</div>
+            </div>
+            
+            <div class="btn-wrapper order-6">
+                <button class="btn" onclick="runAlloc()" id="gen-btn">
+                    <svg class="btn-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z"></path>
+                    </svg>
+                    <div class="txt-wrapper">
+                        <div class="txt-1">
+                            <span class="btn-letter">G</span><span class="btn-letter">e</span><span class="btn-letter">n</span><span class="btn-letter">e</span><span class="btn-letter">r</span><span class="btn-letter">a</span><span class="btn-letter">t</span><span class="btn-letter">e</span>
+                        </div>
+                        <div class="txt-2">
+                            <span class="btn-letter">G</span><span class="btn-letter">e</span><span class="btn-letter">n</span><span class="btn-letter">e</span><span class="btn-letter">r</span><span class="btn-letter">a</span><span class="btn-letter">t</span><span class="btn-letter">i</span><span class="btn-letter">n</span><span class="btn-letter">g</span>
+                        </div>
+                    </div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex flex-col lg:grid lg:grid-cols-12 gap-6 flex-1 min-h-[500px] lg:min-h-0">
+        
+        <div class="w-full lg:col-span-3 bg-black/40 backdrop-blur-md rounded-3xl p-6 border border-gray-800 flex flex-col gap-8 h-auto lg:h-full overflow-y-auto custom-scroll shadow-2xl">
+            
+            <div>
+                <label class="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> 1. Exam Session
+                </label>
+                <div class="grid grid-cols-2 gap-4">
+                    <label class="cursor-pointer relative">
+                        <input type="radio" name="etype" value="odd" checked class="peer sr-only">
+                        <div class="rounded-xl border-2 border-gray-700 bg-gray-900/50 p-4 text-center transition-all peer-checked:border-emerald-500 peer-checked:bg-emerald-500/10 peer-checked:shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:border-gray-600">
+                            <h3 class="text-xl font-bold text-gray-300 peer-checked:text-emerald-400">ODD</h3>
+                            <p class="text-xs text-gray-500 font-bold mt-1 uppercase tracking-wide">Sem 1, 3, 5</p>
+                        </div>
+                    </label>
+
+                    <label class="cursor-pointer relative">
+                        <input type="radio" name="etype" value="even" class="peer sr-only">
+                        <div class="rounded-xl border-2 border-gray-700 bg-gray-900/50 p-4 text-center transition-all peer-checked:border-blue-500 peer-checked:bg-blue-500/10 peer-checked:shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:border-gray-600">
+                            <h3 class="text-xl font-bold text-gray-300 peer-checked:text-blue-400">EVEN</h3>
+                            <p class="text-xs text-gray-500 font-bold mt-1 uppercase tracking-wide">Sem 2, 4, 6</p>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <div class="flex-1 min-h-[250px] flex flex-col">
+                <label class="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> 2. Select Programs
+                </label>
+                <div class="flex-1 overflow-y-auto custom-scroll pr-2 space-y-3">
+                    {% for p in programs %}
+                    <label class="flex items-center gap-3 bg-gray-900/80 border border-gray-800 rounded-xl p-3 hover:bg-gray-800 transition-colors cursor-pointer group">
+                        
+                        <div class="ios-checkbox">
+                            <input type="checkbox" value="{{ p.id }}" class="prog-chk">
+                            <div class="checkbox-wrapper">
+                                <div class="checkbox-bg"></div>
+                                <svg fill="none" viewBox="0 0 24 24" class="checkbox-icon">
+                                    <path stroke-linejoin="round" stroke-linecap="round" stroke-width="3" stroke="currentColor" d="M4 12L10 18L20 6" class="check-path"></path>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <span class="text-xs font-bold text-gray-400 group-hover:text-gray-200 transition-colors">
+                            {{ p.name }}
+                        </span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="w-full lg:col-span-9 flex flex-col gap-6 h-full min-h-[400px] lg:min-h-0">
+            
+            <div class="bg-black/20 rounded-3xl border border-gray-800/50 flex-1 flex flex-col min-h-0 overflow-hidden shadow-inner">
+                <div id="results-area" class="flex-1 overflow-y-auto overflow-x-hidden custom-scroll p-4 lg:p-6">
+                    <div class="h-full flex flex-col items-center justify-center text-gray-600 opacity-60">
+                        <svg class="w-20 h-20 mb-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                        <p class="text-lg font-medium text-gray-500 text-center">Select criteria and click Generate</p>
+                        <p class="text-sm text-gray-700 mt-2 text-center">Your seating plan will appear here.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="publish-container" class="hidden flex-shrink-0 bg-gray-900/80 border border-emerald-500/30 p-4 rounded-2xl flex flex-col sm:flex-row justify-between items-center gap-4 backdrop-blur-sm shadow-2xl shadow-emerald-900/10">
+                <div class="text-center sm:text-left">
+                    <h3 class="text-lg font-bold text-white">Satisfied with this plan?</h3>
+                    <p class="text-gray-400 text-sm">Publishing makes this permanent.</p>
+                </div>
+                <button onclick="publishCurrentPlan()" class="w-full sm:w-auto relative inline-flex items-center justify-center p-0.5 overflow-hidden text-sm font-medium rounded-xl group bg-gradient-to-br from-emerald-500 to-teal-400 group-hover:from-emerald-500 group-hover:to-teal-400 hover:text-white text-white focus:ring-4 focus:outline-none focus:ring-emerald-800 shadow-lg shadow-emerald-500/30">
+                    <span class="relative px-6 py-3 transition-all ease-in duration-75 bg-gray-900 rounded-[10px] group-hover:bg-opacity-0 flex items-center justify-center gap-2 font-bold w-full sm:w-auto">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                        Publish Final Timetable
+                    </span>
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- GLOBAL STATE ---
+    let currentAllocationData = null;
+    let currentTotalStats = 0;
+    const programMap = {};
+    {% for p in programs %}
+    programMap[{{ p.id }}] = "{{ p.name }}";
+    {% endfor %}
+
+    // --- 1. GENERATE ---
+    async function runAlloc() {
+        const btn = document.getElementById('gen-btn');
+        const area = document.getElementById('results-area');
+        const type = document.querySelector('input[name="etype"]:checked').value;
+        const progs = Array.from(document.querySelectorAll('.prog-chk:checked')).map(c => c.value);
+
+        if(progs.length === 0) return alert("Select at least 1 program");
+
+        btn.focus(); 
+        btn.disabled = true;
+        
+        document.getElementById('publish-container').classList.add('hidden');
+
+        try {
+            const res = await fetch('/run_allocation', {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({ program_ids: progs, exam_type: type })
+            });
+            const data = await res.json();
+            
+            if(data.status === 'success'){
+                currentAllocationData = data.details;
+                currentTotalStats = data.total;
+                document.getElementById('stats-counter').innerText = `${data.allocated}/${data.total}`;
+                renderClassrooms(data.details);
+                document.getElementById('publish-container').classList.remove('hidden');
+            } else {
+                area.innerHTML = `<div class="text-center text-red-500 mt-20 font-bold">${data.message}</div>`;
+            }
+        } catch(e) {
+            console.error(e);
+            area.innerHTML = `<div class="text-center text-red-500 mt-10 font-bold">Error in allocation.</div>`;
+        }
+        
+        btn.blur();
+        btn.disabled = false;
+    }
+
+    // --- 2. RENDER (VISUAL BENCH MAP) ---
+    function renderClassrooms(list) {
+        const area = document.getElementById('results-area');
+        area.innerHTML = ''; 
+        if(!list || list.length === 0) {
+            area.innerHTML = `<div class="text-center text-gray-500 mt-20">No students found.</div>`;
+            return;
+        }
+        
+        const grouped = {};
+        list.forEach(item => { if(!grouped[item.room]) grouped[item.room] = []; grouped[item.room].push(item); });
+
+        for (const [roomName, students] of Object.entries(grouped)) {
+            const benches = {};
+            
+            const roomCols = students[0].room_cols || 3; 
+            const roomRows = students[0].room_rows || 10;
+            const totalBenches = roomCols * roomRows;
+
+            students.forEach(s => {
+                if(!benches[s.bench]) benches[s.bench] = { L: null, R: null };
+                if(s.seat === 'L') benches[s.bench].L = s; else benches[s.bench].R = s;
+            });
+
+            let benchesHTML = '';
+            
+            for(let bid = 1; bid <= totalBenches; bid++) {
+                const benchData = benches[bid] || { L: null, R: null };
+                const sL = benchData.L;
+                const sR = benchData.R;
+                
+                const urlL = sL ? `/scan/${sL.exam_uid}` : '';
+                const urlR = sR ? `/scan/${sR.exam_uid}` : '';
+
+                const htmlL = sL ? `<div class="seat-box seat-occupied-blue"><img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(urlL)}" class="qr-code"><div class="stu-roll">${sL.roll}</div><div class="stu-name">${sL.name}</div><div class="stu-reg">${sL.reg_no}</div></div>` : `<div class="seat-box opacity-10 border border-dashed border-gray-600"></div>`;
+                const htmlR = sR ? `<div class="seat-box seat-occupied-purple"><img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(urlR)}" class="qr-code"><div class="stu-roll">${sR.roll}</div><div class="stu-name">${sR.name}</div><div class="stu-reg">${sR.reg_no}</div></div>` : `<div class="seat-box opacity-10 border border-dashed border-gray-600"></div>`;
+                
+                benchesHTML += `<div class="bench-unit"><div class="bench-label">Bench ${bid}</div><div class="seats-row">${htmlL}${htmlR}</div></div>`;
+            }
+
+            const gridStyles = `grid-template-rows: repeat(${roomRows}, auto); grid-auto-flow: column; grid-template-columns: repeat(${roomCols}, minmax(280px, 1fr));`;
+
+            area.innerHTML += `
+            <div class="classroom-wrapper custom-scroll">
+                <div class="flex justify-between items-center mb-6 border-b border-gray-700/50 pb-3">
+                    <h2 class="text-xl font-bold text-white">${roomName}</h2>
+                    <span class="bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full text-xs font-bold">${students.length} Allocated</span>
+                </div>
+                <div class="benches-grid" style="${gridStyles}">${benchesHTML}</div>
+            </div>`;
+        }
+    }
+
+    // --- 3. PUBLISH FUNCTION ---
+    async function publishCurrentPlan() {
+        if(!currentAllocationData) return alert("No plan generated yet.");
+        const title = prompt("Enter a name for this timetable (e.g., 'Odd Semester Exams 2025-26'):");
+        if(!title) return;
+
+        const btn = document.querySelector('#publish-container button');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = `<span class="relative px-6 py-3 bg-gray-900 rounded-[10px] flex items-center gap-2"><svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Publishing...</span>`;
+        btn.disabled = true;
+
+        try {
+            const res = await fetch('/publish_timetable', {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({ title: title, details: currentAllocationData, total: currentTotalStats })
+            });
+            const respData = await res.json();
+            if(respData.status === 'success') {
+                window.location.href = respData.redirect_url;
+            } else {
+                alert("Error publishing: " + respData.message);
+                btn.innerHTML = originalText; btn.disabled = false;
+            }
+        } catch(e) {
+             alert("Server Error during publish.");
+             btn.innerHTML = originalText; btn.disabled = false;
+        }
+    }
+
+    // --- 4. SHARE / DOWNLOAD GENERATION ---
+    async function downloadReport() {
+        if(!currentAllocationData || currentAllocationData.length === 0) return alert("Generate a plan first.");
+
+        // Show loading state on button
+        const btnTextSpan = document.querySelector('button[onclick="downloadReport()"] span span');
+        const originalBtnText = btnTextSpan.innerText;
+        btnTextSpan.innerText = "Generating PDF...";
+
+        const typeInput = document.querySelector('input[name="etype"]:checked');
+        const type = typeInput ? typeInput.value : 'Odd'; 
+        const date = new Date();
+        let startYear = date.getFullYear();
+        if (date.getMonth() < 6) startYear -= 1;
+        const endYearShort = (startYear + 1).toString().slice(-2);
+        const examTitle = `${type.charAt(0).toUpperCase() + type.slice(1)} Semester Exams ${startYear}-${endYearShort}`;
+        const safeTitle = `${type}_Semester_Exam_Report`.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'mm', 'a4'); 
+        const grouped = {};
+        
+        currentAllocationData.forEach(item => { if(!grouped[item.room]) grouped[item.room] = []; grouped[item.room].push(item); });
+
+        let firstPage = true;
+        for (const [roomName, students] of Object.entries(grouped)) {
+            if (!firstPage) doc.addPage();
+            firstPage = false;
+
+            // --- ORANGE DOUBLE BORDER ---
+            doc.setDrawColor(217, 102, 33); 
+            doc.setLineWidth(1);
+            doc.rect(5, 5, 200, 287); 
+            doc.setLineWidth(0.4);
+            doc.rect(7, 7, 196, 283); 
+
+            // --- HEADER ---
+            doc.setFont("times", "bold");
+            doc.setFontSize(24);
+            doc.setTextColor(217, 102, 33); 
+            doc.text("SARALA BIRLA UNIVERSITY", 105, 22, null, null, "center");
+            
+            doc.setFontSize(14);
+            doc.setTextColor(0, 0, 0); 
+            doc.text("Ranchi, Jharkhand", 105, 30, null, null, "center");
+            
+            doc.setDrawColor(0);
+            doc.setLineWidth(0.8);
+            doc.line(10, 36, 200, 36);
+
+            // --- SUB-HEADER ---
+            doc.setFontSize(11);
+            doc.text(`EXAM: ${examTitle}`, 105, 43, null, null, "center");
+            doc.text(`ROOM: ${roomName}   |   TIME: 10:00 AM - 01:00 PM`, 105, 49, null, null, "center");
+
+            // --- PREPARE GRID DATA ---
+            const roomCols = students[0].room_cols || 3; 
+            const roomRows = students[0].room_rows || 10;
+            const seatsPerRow = roomCols * 2; 
+
+            const tableHeaders = [''];
+            for(let i=1; i<=seatsPerRow; i++) { tableHeaders.push(`Col-${i}`); }
+            
+            // 1. Create an empty grid matrix mirroring the physical room
+            const tableGrid = Array.from({ length: roomRows }, () => Array(seatsPerRow).fill('-'));
+
+            // 2. Map every student mathematically to their exact Row/Col coordinate
+            students.forEach(s => {
+                // Determine physical column and row of the bench
+                const benchCol = Math.floor((s.bench - 1) / roomRows);
+                const benchRow = (s.bench - 1) % roomRows;
+                
+                // Determine exact seat column in the PDF table
+                const seatCol = (benchCol * 2) + (s.seat === 'L' ? 0 : 1);
+
+                // Place student roll number into the matrix
+                if (benchRow < roomRows && seatCol < seatsPerRow) {
+                    tableGrid[benchRow][seatCol] = s.roll;
+                }
+            });
+
+            // 3. Convert the matrix into autoTable format
+            const tableBody = [];
+            tableGrid.forEach((rowArray, i) => {
+                const rData = [`Row-${i+1}`, ...rowArray];
+                tableBody.push(rData);
+            });
+            // --- MAIN TABLE ---
+            doc.autoTable({
+                startY: 55,
+                head: [tableHeaders],
+                body: tableBody,
+                theme: 'grid',
+                styles: { font: 'helvetica', fontSize: 9, cellPadding: 3, halign: 'center', valign: 'middle', lineColor: [0, 0, 0], lineWidth: 0.1, textColor: [0, 0, 0] },
+                headStyles: { fillColor: [159, 197, 248], textColor: [0, 0, 0], fontStyle: 'bold', lineColor: [0, 0, 0], lineWidth: 0.1 },
+                columnStyles: { 0: { fillColor: [243, 243, 243], fontStyle: 'bold' } },
+                margin: { left: 10, right: 10 }
+            });
+
+            // --- SUMMARY TABLE ---
+            const summary = {};
+            let total = 0;
+            students.forEach(s => {
+                const progName = (s.prog_id && programMap[s.prog_id]) ? programMap[s.prog_id] : "Unknown";
+                if(!summary[progName]) summary[progName] = { min: s.roll, max: s.roll, count: 0 };
+                if(s.roll < summary[progName].min) summary[progName].min = s.roll;
+                if(s.roll > summary[progName].max) summary[progName].max = s.roll;
+                summary[progName].count++;
+            });
+
+            const sumBody = [];
+            for(const [p, d] of Object.entries(summary)) { 
+                sumBody.push([`${p} [${d.min} - ${d.max}]`, d.count]); 
+                total += d.count; 
+            }
+            sumBody.push([{content: 'Total', styles: {fontStyle: 'bold', halign: 'right'}}, {content: total, styles: {fontStyle: 'bold'}}]);
+
+            doc.autoTable({
+                startY: doc.lastAutoTable.finalY + 15,
+                head: [['Program & Range', 'Count']],
+                body: sumBody,
+                theme: 'grid',
+                margin: { left: 35, right: 35 },
+                styles: { font: 'helvetica', fontSize: 9, textColor: 0, lineColor: [0,0,0], lineWidth: 0.1, halign: 'left', cellPadding: 3 },
+                headStyles: { fillColor: [255, 255, 255], textColor: 0, fontStyle: 'bold', lineWidth: 0.1, lineColor: [0,0,0] },
+                columnStyles: { 1: { halign: 'left', cellWidth: 25 } }
+            });
+
+            // --- FOOTER SIGNATURES ---
+            doc.setFontSize(10);
+            doc.setFont("times", "bold");
+            doc.text("Examination Department, SBU", 20, 275);
+            doc.text("Controller of Examinations", 190, 275, null, null, "right");
+        }
+
+        // --- WEB SHARE API WITH FALLBACK ---
+        const pdfBlob = doc.output('blob');
+        const file = new File([pdfBlob], `${safeTitle}.pdf`, { type: "application/pdf" });
+
+        // Reset button text
+        btnTextSpan.innerText = originalBtnText;
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            try {
+                await navigator.share({
+                    files: [file],
+                    title: 'Exam Timetable',
+                    text: 'Here is the generated exam seating arrangement.'
+                });
+            } catch (err) {
+                console.log('Share interaction canceled or failed.', err);
+            }
+        } else {
+            // Silently fallback to standard download if sharing files isn't supported (e.g. Desktop browsers)
+            doc.save(`${safeTitle}.pdf`);
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Identity | Scan Result</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { background: #0f172a; font-family: 'Inter', sans-serif; color: white; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box;}
+        .id-card {
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 32px;
+            width: 100%;
+            max-width: 360px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .glow {
+            position: absolute; width: 150px; height: 150px; background: radial-gradient(circle, rgba(59,130,246,0.4) 0%, rgba(0,0,0,0) 70%);
+            top: -50px; left: -50px; z-index: -1;
+        }
+        .status-badge {
+            background: #10b981; color: #064e3b; font-weight: 800; font-size: 12px;
+            padding: 6px 16px; border-radius: 99px; display: inline-block; margin-bottom: 20px;
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); text-transform: uppercase; letter-spacing: 1px;
+        }
+        .data-row {
+            display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding: 12px 0; font-size: 14px; text-align: left;
+        }
+        .data-row:last-child { border-bottom: none; }
+        .label { color: #94a3b8; font-weight: 500; }
+        .value { color: white; font-weight: 700; text-align: right; }
+        .avatar {
+            width: 80px; height: 80px; background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border-radius: 50%; margin: 0 auto 16px auto; display: flex; align-items: center; justify-content: center;
+            font-size: 32px; font-weight: bold; border: 4px solid rgba(30, 41, 59, 1);
+        }
+    </style>
+</head>
+<body>
+    <div class="id-card">
+        <div class="glow"></div>
+        
+        <div class="status-badge">Student Verified</div>
+        
+        <div class="avatar">
+            {{ student.name[0] }}
+        </div>
+        
+        <h1 class="text-2xl font-bold mb-1">{{ student.name }}</h1>
+        <p class="text-blue-400 font-mono text-sm font-bold mb-6">{{ student.exam_uid }}</p>
+
+        <div class="text-left bg-gray-900/40 rounded-xl p-4 border border-gray-800">
+            <div class="data-row">
+                <span class="label">Roll Number</span>
+                <span class="value">{{ student.roll_no }}</span>
+            </div>
+            <div class="data-row">
+                <span class="label">Registration</span>
+                <span class="value text-emerald-400 font-mono">{{ student.reg_no }}</span>
+            </div>
+            <div class="data-row">
+                <span class="label">Program</span>
+                <span class="value">{{ program.name }}</span>
+            </div>
+            <div class="data-row">
+                <span class="label">Semester</span>
+                <span class="value">Sem {{ student.semester }} - Sec {{ student.section }}</span>
+            </div>
+            <div class="data-row">
+                <span class="label">Academic Year</span>
+                <span class="value">{{ student.academic_year }}</span>
+            </div>
+        </div>
+
+        <button onclick="closeScan()" class="mt-6 w-full py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-xl font-bold transition">
+            Close Scan
+        </button>
+    </div>
+
+    <script>
+        function closeScan() {
+            // 1. Try to go back if there is history
+            if (window.history.length > 1 && document.referrer !== "") {
+                window.history.back();
+            } else {
+                // 2. Try to close the window (works in some mobile webviews/camera apps)
+                window.close();
+                
+                // 3. Fallback: if browser blocks window.close(), redirect to the home page
+                setTimeout(() => {
+                    window.location.href = '/'; 
+                }, 300);
+            }
+        }
+    </script>
+</body>
+</html>

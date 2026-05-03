@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    
+    <h2 class="text-3xl font-bold mb-8">Infrastructure Manager</h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        
+        <div class="glass-panel p-8 rounded-2xl">
+            <h3 class="text-xl font-semibold mb-6 flex items-center gap-2">
+                <span class="bg-blue-500 w-2 h-6 rounded-full"></span> Add New Room
+            </h3>
+            
+            <form action="/add_room" method="POST" class="space-y-4">
+                <div>
+                    <label class="text-xs text-gray-400 uppercase">Block Name</label>
+                    <select name="block" class="w-full bg-gray-800 border border-gray-600 rounded-lg p-3 mt-1 focus:border-primary outline-none">
+                        <option value="Admin Block">Admin Block</option>
+                        <option value="Science Block">Science Block (A2)</option>
+                        <option value="Management Block">Management Block (A3)</option>
+                    </select>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-xs text-gray-400 uppercase">Floor No</label>
+                        <input type="number" name="floor" class="w-full bg-gray-800 border border-gray-600 rounded-lg p-3 mt-1" placeholder="e.g. 1" required>
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400 uppercase">Room No</label>
+                        <input type="text" name="room_no" class="w-full bg-gray-800 border border-gray-600 rounded-lg p-3 mt-1" placeholder="e.g. 101" required>
+                    </div>
+                </div>
+
+                <hr class="border-gray-700 my-4">
+                
+                <h4 class="text-sm font-bold text-emerald-400 mb-2">Seating Configuration</h4>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-xs text-gray-400 uppercase">Bench Capacity</label>
+                        <select name="capacity" class="w-full bg-gray-800 border border-gray-600 rounded-lg p-3 mt-1">
+                            <option value="2">2 Seater (Standard)</option>
+                            <option value="3">3 Seater (Large)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400 uppercase">Total Benches</label>
+                        <input type="number" name="total_benches" class="w-full bg-gray-800 border border-gray-600 rounded-lg p-3 mt-1" placeholder="e.g. 20" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full mt-6 bg-gradient-to-r from-blue-600 to-indigo-600 py-3 rounded-xl font-bold hover:shadow-lg hover:shadow-blue-500/30 transition-all">
+                    + Save Room Structure
+                </button>
+            </form>
+        </div>
+
+        <div class="glass-panel p-8 rounded-2xl">
+            <h3 class="text-xl font-semibold mb-6">Existing Database</h3>
+            <div class="overflow-y-auto h-[400px] space-y-3">
+                {% for room in rooms %}
+                <div class="bg-gray-800/50 p-4 rounded-xl border border-gray-700 flex justify-between items-center hover:bg-gray-800 transition-colors">
+                    <div>
+                        <div class="font-bold text-white">{{ room.block }} - {{ room.room_no }}</div>
+                        <div class="text-xs text-gray-400">Floor {{ room.floor }} • {{ room.bench_type }}-Seater Benches</div>
+                    </div>
+                    <div class="bg-gray-700 px-3 py-1 rounded text-xs font-mono">
+                        {{ room.rows * room.cols }} Seats
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

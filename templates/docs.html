@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    /* Custom Scrollbar for the Docs Page */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+    /* Glass Effect for Content Blocks */
+    .doc-card {
+        background: rgba(30, 41, 59, 0.4);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        transition: all 0.3s ease;
+    }
+    
+    /* Glowing Text */
+    .text-glow {
+        text-shadow: 0 0 20px rgba(56, 189, 248, 0.5);
+    }
+
+    /* Sidebar Link Active State */
+    .nav-link.active {
+        background: linear-gradient(to right, rgba(56, 189, 248, 0.1), transparent);
+        border-left: 3px solid #38bdf8;
+        color: white;
+    }
+</style>
+
+<div class="max-w-7xl mx-auto px-4 py-12 flex flex-col md:flex-row gap-10">
+    
+    <aside class="md:w-1/4 hidden md:block">
+        <div class="sticky top-24 space-y-8">
+            <div>
+                <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Getting Started</h3>
+                <ul class="space-y-2">
+                    <li><a href="#intro" class="nav-link block px-4 py-2 text-sm text-gray-400 hover:text-white transition rounded-r-lg">Introduction</a></li>
+                    <li><a href="#features" class="nav-link block px-4 py-2 text-sm text-gray-400 hover:text-white transition rounded-r-lg">Core Features</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">User Guide</h3>
+                <ul class="space-y-2">
+                    <li><a href="#setup" class="nav-link block px-4 py-2 text-sm text-gray-400 hover:text-white transition rounded-r-lg">1. Campus Setup</a></li>
+                    <li><a href="#students" class="nav-link block px-4 py-2 text-sm text-gray-400 hover:text-white transition rounded-r-lg">2. Student Data</a></li>
+                    <li><a href="#allocation" class="nav-link block px-4 py-2 text-sm text-gray-400 hover:text-white transition rounded-r-lg">3. AI Allocation</a></li>
+                    <li><a href="#printing" class="nav-link block px-4 py-2 text-sm text-gray-400 hover:text-white transition rounded-r-lg">4. Printing & QR</a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+
+    <main class="md:w-3/4 space-y-16">
+
+        <section id="intro" class="relative">
+            <div class="absolute -top-10 -left-10 w-64 h-64 bg-cyan-500/20 rounded-full blur-[80px]"></div>
+            <h1 class="text-5xl font-extrabold text-white tracking-tight mb-6">
+                System <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600 text-glow">Documentation</span>
+            </h1>
+            <p class="text-lg text-slate-400 leading-relaxed max-w-3xl">
+                Welcome to the ExamCell AI v2.1 official documentation. This platform is designed to automate the complex process of university examination management, from defining room layouts to generating anti-cheat seating arrangements.
+            </p>
+        </section>
+
+        <section id="features">
+            <h2 class="text-2xl font-bold text-white mb-8 flex items-center gap-3">
+                <span class="w-8 h-1 bg-cyan-500 rounded-full"></span> Core Features
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="doc-card p-6 group hover:border-cyan-500/30">
+                    <div class="w-10 h-10 rounded-lg bg-cyan-500/10 flex items-center justify-center mb-4 group-hover:bg-cyan-500/20 transition">
+                        <svg class="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2">Smart Allocation Logic</h3>
+                    <p class="text-sm text-slate-400">The system uses a "Non-Adjacent" algorithm. It ensures that two students from the same department never sit next to each other.</p>
+                </div>
+                <div class="doc-card p-6 group hover:border-blue-500/30">
+                    <div class="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center mb-4 group-hover:bg-blue-500/20 transition">
+                        <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2">Visual Campus Map</h3>
+                    <p class="text-sm text-slate-400">Create blocks, floors, and rooms. Use the Visual Editor to drag and drop benches, defining the exact capacity of every room.</p>
+                </div>
+                <div class="doc-card p-6 group hover:border-purple-500/30">
+                    <div class="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center mb-4 group-hover:bg-purple-500/20 transition">
+                        <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2">QR Code Stickers</h3>
+                    <p class="text-sm text-slate-400">Generate printable stickers for desks. Each sticker contains student info and a scanable QR code for instant identity verification.</p>
+                </div>
+                <div class="doc-card p-6 group hover:border-emerald-500/30">
+                    <div class="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center mb-4 group-hover:bg-emerald-500/20 transition">
+                        <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2">Bulk CSV Import</h3>
+                    <p class="text-sm text-slate-400">Upload hundreds of students in seconds using Excel or CSV files. The system automatically sorts them into Programs and Semesters.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="setup" class="space-y-12">
+            <h2 class="text-2xl font-bold text-white mb-8 flex items-center gap-3">
+                <span class="w-8 h-1 bg-blue-500 rounded-full"></span> User Guide
+            </h2>
+
+            <div class="flex gap-6">
+                <div class="flex flex-col items-center">
+                    <div class="w-10 h-10 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center font-bold text-white">1</div>
+                    <div class="h-full w-px bg-slate-700 my-2"></div>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold text-white">Campus Infrastructure Setup</h3>
+                    <p class="text-slate-400 mt-2 mb-4">Before allocating seats, you must define the physical space.</p>
+                    <ul class="list-disc list-inside text-sm text-slate-400 space-y-2">
+                        <li>Go to <strong>Campus</strong> page.</li>
+                        <li>Click "Add Building" to create a Block.</li>
+                        <li>Click "Manage Structure" to add Floors and Rooms.</li>
+                        <li>Use the <strong>Room Editor</strong> to draw the bench layout (e.g., 5 rows x 4 columns).</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div id="students" class="flex gap-6">
+                <div class="flex flex-col items-center">
+                    <div class="w-10 h-10 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center font-bold text-white">2</div>
+                    <div class="h-full w-px bg-slate-700 my-2"></div>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold text-white">Manage Student Data</h3>
+                    <p class="text-slate-400 mt-2 mb-4">Ensure student data is accurate for allocation.</p>
+                    <ul class="list-disc list-inside text-sm text-slate-400 space-y-2">
+                        <li>Go to <strong>Programs</strong> to define courses (e.g., B.Tech CSE, MBA).</li>
+                        <li>Go to <strong>Students</strong> page.</li>
+                        <li>Use "Bulk Upload" to upload an Excel file.</li>
+                        <li><strong>Format:</strong> The Excel file must have columns: <em>Name, Roll No, Reg No</em>.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div id="allocation" class="flex gap-6">
+                <div class="flex flex-col items-center">
+                    <div class="w-10 h-10 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center font-bold text-white">3</div>
+                    <div class="h-full w-px bg-slate-700 my-2"></div>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold text-white">Run Allocation Algorithm</h3>
+                    <p class="text-slate-400 mt-2 mb-4">The core function of the system.</p>
+                    <div class="bg-slate-800/50 p-4 rounded-lg border border-slate-700">
+                        <p class="text-sm text-slate-300">1. Select the Programs (e.g., B.Tech Sem 3 & BBA Sem 1).<br>2. Select "Odd" or "Even" semester exam.<br>3. Click <strong>"Start Allocation"</strong>.<br>4. The system will mix students and fill rooms automatically.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="printing" class="flex gap-6">
+                <div class="flex flex-col items-center">
+                    <div class="w-10 h-10 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center font-bold text-white">4</div>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold text-white">Publish & Print</h3>
+                    <p class="text-slate-400 mt-2 mb-4">Finalize the process.</p>
+                    <ul class="list-disc list-inside text-sm text-slate-400 space-y-2">
+                        <li>Once satisfied with the preview, click <strong>"Publish Timetable"</strong>.</li>
+                        <li>This saves the snapshot to the database.</li>
+                        <li>Go to "Exam Timetable" to view history.</li>
+                        <li>Click <strong>"Print Stickers"</strong> to generate the PDF for sticking on desks.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+    </main>
+</div>
+
+<script>
+    document.querySelectorAll('.nav-link').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            document.querySelector(this.getAttribute('href')).scrollIntoView({
+                behavior: 'smooth'
+            });
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+</script>
+{% endblock %}

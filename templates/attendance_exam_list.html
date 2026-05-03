@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-8">
+
+    <div class="flex items-center gap-2 text-sm text-gray-500 mb-6">
+        <a href="{{ url_for('attendance_dashboard') }}" class="hover:text-white">Dashboard</a>
+        <span>/</span>
+        <a href="{{ url_for('attendance_program_view', program_id=program.id) }}" class="hover:text-white">{{ program.name }}</a>
+        <span>/</span>
+        <span class="text-blue-400 font-bold">{{ info.subject }}</span>
+    </div>
+
+    <div class="flex flex-col md:flex-row justify-between items-end gap-4 mb-8">
+        <div>
+            <h1 class="text-3xl font-extrabold text-white">{{ info.subject }}</h1>
+            <p class="text-gray-400 mt-1 flex gap-4 text-sm font-mono">
+                <span class="bg-gray-800 px-2 py-1 rounded">CODE: {{ info.code }}</span>
+                <span class="bg-gray-800 px-2 py-1 rounded">DATE: {{ info.date }}</span>
+            </p>
+        </div>
+        
+        <div class="flex gap-3 w-full md:w-auto">
+            <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Search Name, Roll, Sheet..." class="bg-gray-800 border border-gray-600 text-white text-sm rounded-lg px-4 py-2.5 focus:border-blue-500 outline-none w-full md:w-64">
+            
+            <button onclick="printReport()" class="bg-red-600 hover:bg-red-500 text-white px-5 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 whitespace-nowrap transition shadow-lg shadow-red-900/20">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                Download PDF
+            </button>
+        </div>
+    </div>
+
+    <div class="bg-[#0f172a] rounded-2xl border border-gray-800 overflow-hidden shadow-xl">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-gray-300" id="studentTable">
+                <thead class="bg-gray-900 text-gray-400 uppercase font-bold text-xs">
+                    <tr>
+                        <th class="px-6 py-4">S.No</th>
+                        <th class="px-6 py-4">Roll No</th>
+                        <th class="px-6 py-4">Student Name</th>
+                        <th class="px-6 py-4">Reg No</th>
+                        <th class="px-6 py-4">Answer Sheet</th>
+                        <th class="px-6 py-4 text-center">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-800">
+                    {% for s in students %}
+                    <tr class="{{ s.row_color }} transition group">
+                        <td class="px-6 py-4 font-mono text-gray-500">{{ loop.index }}</td>
+                        <td class="px-6 py-4 font-mono text-white">{{ s.roll }}</td>
+                        <td class="px-6 py-4 font-bold text-white">{{ s.name }}</td>
+                        <td class="px-6 py-4 font-mono text-gray-400">{{ s.reg }}</td>
+                        <td class="px-6 py-4">
+                            {% if s.sheet_no != '-' %}
+                                <span class="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-1 rounded font-mono font-bold">{{ s.sheet_no }}</span>
+                            {% else %}
+                                <span class="text-gray-600 font-mono">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            {% if s.status == 'Present' %}
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Present
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/20">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Absent
+                                </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<iframe id="printFrame" style="display:none;" src="{{ url_for('download_exam_pdf', program_id=program.id, code=info.code, date=info.date) }}"></iframe>
+
+<script>
+    function filterTable() {
+        const input = document.getElementById("searchInput");
+        const filter = input.value.toUpperCase();
+        const table = document.getElementById("studentTable");
+        const tr = table.getElementsByTagName("tr");
+
+        for (let i = 1; i < tr.length; i++) {
+            let visible = false;
+            const tds = tr[i].getElementsByTagName("td");
+            for(let j=0; j<tds.length; j++){
+                if(tds[j] && tds[j].innerText.toUpperCase().indexOf(filter) > -1){
+                    visible = true;
+                }
+            }
+            tr[i].style.display = visible ? "" : "none";
+        }
+    }
+
+    function printReport() {
+        const frame = document.getElementById('printFrame');
+        frame.contentWindow.print();
+    }
+</script>
+{% endblock %}
